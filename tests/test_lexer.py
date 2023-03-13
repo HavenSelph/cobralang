@@ -1,4 +1,5 @@
 import unittest
-from src.cobralang.lexer import *
+import src.cobralang.lexer
 
-# todo: add tests
+
+# Test the lexer
