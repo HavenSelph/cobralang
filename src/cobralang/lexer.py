@@ -40,10 +40,10 @@ class Position:
         return self.index != other
 
     def __repr__(self):
-        return f"Position({self.line}, {self.column})"
+        return f"Position({self.line}:{self.column})"
 
 
-class TokenType(Enum):
+class TokenKind(Enum):
     # Literals
     StringLiteral = auto()
     IntegerLiteral = auto()
@@ -73,41 +73,57 @@ class TokenType(Enum):
 
 
 keywords = {
-    "True": TokenType.BooleanLiteral,
-    "False": TokenType.BooleanLiteral,
-    "Null": TokenType.NullLiteral
+    "True": TokenKind.BooleanLiteral,
+    "False": TokenKind.BooleanLiteral,
+    "Null": TokenKind.NullLiteral
 }
 
 single_character_tokens = {
-    "+": TokenType.Plus,
-    "-": TokenType.Minus,
-    "*": TokenType.Multiply,
-    "/": TokenType.Divide,
-    "=": TokenType.Equal,
-    "(": TokenType.LeftParen,
-    ")": TokenType.RightParen,
-    ";": TokenType.Semicolon,
-    ":": TokenType.Colon,
+    "+": TokenKind.Plus,
+    "-": TokenKind.Minus,
+    "*": TokenKind.Multiply,
+    "/": TokenKind.Divide,
+    "=": TokenKind.Equal,
+    "(": TokenKind.LeftParen,
+    ")": TokenKind.RightParen,
+    ";": TokenKind.Semicolon,
+    ":": TokenKind.Colon,
 }
 
 
 @dataclass
 class Token:
-    type: TokenType
+    kind: TokenKind
+    position_end: Position
+    position_start: Position
     value: str = None
     space_after: bool = False
     new_line_after: bool = False
-    position_start: Position = None
-    position_end: Position = position_start
 
     def __repr__(self):
         if self.value:
-            return f"Token({self.type}, {self.value})"
-        return f"Token({self.type})"
+            return f"Token({self.kind}, {self.value})"
+        return f"Token({self.kind})"
+
+
+class LexerError(Exception):
+    def __init__(self, message: str, position_start: Position, position_end: Position):
+        self.position_start = position_start
+        self.position_end = position_end
+        self.message = message
+        super().__init__(message)
+
+
+class InvalidFloatError(LexerError):
+    pass
+
+
+class IllegalCharError(LexerError):
+    pass
 
 
 class Lexer:
-    def __init__(self, filename: str, text: str, start: int = 0, logger: logging.Logger = None, logging_level: int = 51, log_file: str = None):
+    def __init__(self, filename: str, text: str, start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
         self.filename = filename
         self.text = text
         self.current_char = None
@@ -143,7 +159,13 @@ class Lexer:
                 self.position.column = 0
 
     def tokenize(self):
-        tokens = [Token(TokenType.SOF, position_start=self.position)]
+        tokens = [Token(TokenKind.SOF, Position(-1, 0, -1), Position(-1, 0, -1))]
+
+        def push_token(kind: TokenKind, value: str, start: Position=None):
+            tokens.append(Token(
+                kind, position_end=self.position, position_start=start or self.position, value=value
+            ))
+
         while self.current_char is not None:
             match self.current_char:
                 case "\n":
@@ -152,5 +174,32 @@ class Lexer:
                 case " ":
                     tokens[-1].space_after = True
                     self.advance()
-
+                case char if char in single_character_tokens:
+                    tokens.append(Token(
+                        single_character_tokens[char], position_end=self.position, position_start=self.position
+                    ))
+                    self.advance()
+                case char if char.isdigit():
+                    start = self.position
+                    value = ""
+                    dot = False
+                    while self.current_char is not None and (self.current_char.isdigit() or self.current_char == "."):
+                        if self.current_char == ".":
+                            if dot:
+                                self.logger.error(f"Invalid float literal at {self.position}")
+                                raise InvalidFloatError(f"Invalid float literal at {self.position}", start, self.position)
+                            dot = True
+                        value += self.current_char
+                        self.advance()
+                    push_token(TokenKind.FloatLiteral if dot else TokenKind.IntegerLiteral, value, start)
+                case char if char.isalpha():
+                    start = self.position
+                    value = ""
+                    while self.current_char is not None and (self.current_char.isalnum() or self.current_char == "_"):
+                        value += self.current_char
+                        self.advance()
+                    push_token(keywords.get(value, TokenKind.Identifier), value, start)
+                case char:
+                    self.logger.error(f"Illegal character '{char}' at {self.position}")
+                    raise IllegalCharError(f"Illegal character '{char}' at {self.position}", self.position, self.position)
         return tokens[1:]
