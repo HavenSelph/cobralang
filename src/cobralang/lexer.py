@@ -215,11 +215,12 @@ class Lexer:
                         single_character_tokens[char], position_end=self.position, position_start=self.position
                     ))
                     self.advance()
-                case char if char.isdigit():
+                case char if char.isdigit() or char == ".":
                     self.logger.debug("Found digit, parsing integer or float literal")
                     start = self.position
-                    value = ""
-                    dot = False
+                    dot = char == "."
+                    value = char
+                    self.advance()
                     while self.current_char is not None and (self.current_char.isdigit() or self.current_char == "."):
                         if self.current_char == ".":
                             if dot:
@@ -242,7 +243,7 @@ class Lexer:
                     start = self.position
                     value = ""
                     self.advance()
-                    while self.current_char is not None and (self.current_char != char):
+                    while self.current_char is not None and (self.current_char != char or self.current_char == "\n"):
                         if self.current_char == "\\":
                             self.advance()
                             if self.current_char == "n":
@@ -256,7 +257,7 @@ class Lexer:
                         else:
                             value += self.current_char
                         self.advance()
-                    if self.current_char is None:
+                    if self.current_char is not char:
                         self.logger.error(f"Unterminated string literal at {start}")
                         raise InvalidStringError(f"Unterminated string literal at {start}", start, self.position)
                     self.advance()
