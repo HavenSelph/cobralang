@@ -1,6 +1,8 @@
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto
+from os.path import split
+from os.path import isfile
 
 
 @dataclass
@@ -64,12 +66,16 @@ class TokenKind(Enum):
     # Delimiters
     LeftParen = auto()
     RightParen = auto()
+    LeftBrace = auto()
+    RightBrace = auto()
+    LeftBracket = auto()
+    RightBracket = auto()
     Semicolon = auto()
     Colon = auto()
+    Comma = auto()
 
     # Misc
     SOF = auto()
-    EOF = auto()
 
 
 keywords = {
@@ -86,8 +92,13 @@ single_character_tokens = {
     "=": TokenKind.Equal,
     "(": TokenKind.LeftParen,
     ")": TokenKind.RightParen,
+    "{": TokenKind.LeftBrace,
+    "}": TokenKind.RightBrace,
+    "[": TokenKind.LeftBracket,
+    "]": TokenKind.RightBracket,
     ";": TokenKind.Semicolon,
     ":": TokenKind.Colon,
+    ",": TokenKind.Comma,
 }
 
 
@@ -102,7 +113,7 @@ class Token:
 
     def __repr__(self):
         if self.value:
-            return f"Token({self.kind}, {self.value})"
+            return f"Token({self.kind}, {self.value!r})"
         return f"Token({self.kind})"
 
 
@@ -118,14 +129,32 @@ class InvalidFloatError(LexerError):
     pass
 
 
+class InvalidSyntaxError(LexerError):
+    pass
+
+
 class IllegalCharError(LexerError):
     pass
 
 
+class InvalidStringError(LexerError):
+    pass
+
+
+def make_lexer_from_file_path(file_path: str, start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
+    if not isfile(file_path):
+        raise FileNotFoundError(f"File {file_path} does not exist")
+    with open(file_path) as file:
+        text = file.read()
+    return Lexer(text, f"<{split(file_path)[-1]}>", start, logger, logging_level, log_file)
+
+
 class Lexer:
-    def __init__(self, filename: str, text: str, start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
+    def __init__(self, text: str, filename: str="<stdin>", start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
         self.filename = filename
         self.text = text
+        if self.text == "":
+            raise ValueError("Cannot initialize lexer with empty text")
         self.current_char = None
         self.position = Position(start-1, 0, start-1)
         self.advance()
@@ -136,6 +165,8 @@ class Lexer:
             self.logger = logger.getChild("Lexer")
         self.logger.setLevel(logging_level)
         formatter = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s: %(message)s")
+        if self.logger.hasHandlers():
+            self.logger.handlers.clear()
         if log_file is not None:
             file_handler = logging.FileHandler(log_file)
             file_handler.setFormatter(formatter)
@@ -159,27 +190,33 @@ class Lexer:
                 self.position.column = 0
 
     def tokenize(self):
+        # Initialize tokens list, SOF token is only there so that we can always access tokens[-1]
         tokens = [Token(TokenKind.SOF, Position(-1, 0, -1), Position(-1, 0, -1))]
 
         def push_token(kind: TokenKind, value: str, start: Position=None):
             tokens.append(Token(
                 kind, position_end=self.position, position_start=start or self.position, value=value
             ))
+            self.logger.debug(f"Pushed {tokens[-1]}) to stack")
 
         while self.current_char is not None:
             match self.current_char:
                 case "\n":
+                    self.logger.debug(f"Found newline, updating {tokens[-1]}.new_line_after to True")
                     tokens[-1].new_line_after = True
                     self.advance()
                 case " ":
+                    self.logger.debug(f"Found whitespace, updating {tokens[-1]}.space_after to True")
                     tokens[-1].space_after = True
                     self.advance()
                 case char if char in single_character_tokens:
+                    self.logger.debug(f"Pushing Token({single_character_tokens[char]}) to stack")
                     tokens.append(Token(
                         single_character_tokens[char], position_end=self.position, position_start=self.position
                     ))
                     self.advance()
                 case char if char.isdigit():
+                    self.logger.debug("Found digit, parsing integer or float literal")
                     start = self.position
                     value = ""
                     dot = False
@@ -193,13 +230,45 @@ class Lexer:
                         self.advance()
                     push_token(TokenKind.FloatLiteral if dot else TokenKind.IntegerLiteral, value, start)
                 case char if char.isalpha():
+                    self.logger.debug("Found letter, parsing identifier or keyword")
                     start = self.position
                     value = ""
                     while self.current_char is not None and (self.current_char.isalnum() or self.current_char == "_"):
                         value += self.current_char
                         self.advance()
                     push_token(keywords.get(value, TokenKind.Identifier), value, start)
+                case char if char=="'" or char=='"':
+                    self.logger.debug("Found quote, parsing string literal")
+                    start = self.position
+                    value = ""
+                    self.advance()
+                    while self.current_char is not None and (self.current_char != char):
+                        if self.current_char == "\\":
+                            self.advance()
+                            if self.current_char == "n":
+                                value += "\n"
+                            elif self.current_char == "t":
+                                value += "\t"
+                            elif self.current_char == char:
+                                value += char
+                            else:
+                                value += "\\" + self.current_char
+                        else:
+                            value += self.current_char
+                        self.advance()
+                    if self.current_char is None:
+                        self.logger.error(f"Unterminated string literal at {start}")
+                        raise InvalidStringError(f"Unterminated string literal at {start}", start, self.position)
+                    self.advance()
+                    push_token(TokenKind.StringLiteral, value, start)
                 case char:
                     self.logger.error(f"Illegal character '{char}' at {self.position}")
                     raise IllegalCharError(f"Illegal character '{char}' at {self.position}", self.position, self.position)
+        self.logger.debug("Reached end of file, returning tokens")
+        if self.logger.getEffectiveLevel() >= logging.DEBUG:
+            tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"
+            self.logger.debug(f"Tokens: {tmp}")
         return tokens[1:]
+
+
+make_lexer_from_file_path("./test.txt", logging_level=logging.DEBUG).tokenize()
