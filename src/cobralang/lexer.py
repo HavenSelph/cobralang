@@ -189,7 +189,7 @@ class Lexer:
                 self.position.line += 1
                 self.position.column = 0
 
-    def tokenize(self):
+    def tokenize(self) -> list[Token]:
         # Initialize tokens list, SOF token is only there so that we can always access tokens[-1]
         tokens = [Token(TokenKind.SOF, Position(-1, 0, -1), Position(-1, 0, -1))]
 
@@ -269,6 +269,3 @@ class Lexer:
             tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"
             self.logger.debug(f"Tokens: {tmp}")
         return tokens[1:]
-
-
-make_lexer_from_file_path("./test.txt", logging_level=logging.DEBUG).tokenize()
