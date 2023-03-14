@@ -1,8 +1,0 @@
-let x = 0
-while (x <= 10) {
-    print(x)
-    x += 1
-}
-x = True
-x = not x
-print(x)

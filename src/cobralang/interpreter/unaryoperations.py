@@ -16,4 +16,4 @@ class UnaryOp:
 
 class Not(UnaryOp):
     def __init__(self, operand: Node):
-        super().__init__(operand, "not", lambda a: not a)
+        super().__init__(operand, "not", lambda x: not x)

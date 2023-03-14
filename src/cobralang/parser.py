@@ -166,22 +166,23 @@ class Parser:
 
     def parse_assignment(self) -> Node:
         left = self.parse_comparison()
-        match self.current_token.kind:
-            case lexer.TokenKind.Equal:
-                self.advance()
-                left = nodes.Assignment(left, self.parse_assignment())
-            case lexer.TokenKind.PlusEqual:
-                self.advance()
-                left = nodes.Assignment(left, binaryoperations.Add(left, self.parse_assignment()))
-            case lexer.TokenKind.MinusEqual:
-                self.advance()
-                left = nodes.Assignment(left, binaryoperations.Subtract(left, self.parse_assignment()))
-            case lexer.TokenKind.MultiplyEqual:
-                self.advance()
-                left = nodes.Assignment(left, binaryoperations.Multiply(left, self.parse_assignment()))
-            case lexer.TokenKind.DivideEqual:
-                self.advance()
-                left = nodes.Assignment(left, binaryoperations.Divide(left, self.parse_assignment()))
+        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.PlusEqual, lexer.TokenKind.MinusEqual, lexer.TokenKind.MultiplyEqual, lexer.TokenKind.DivideEqual):
+            match self.current_token.kind:
+                case lexer.TokenKind.Equal:
+                    self.advance()
+                    left = nodes.Assignment(left, self.parse_assignment())
+                case lexer.TokenKind.PlusEqual:
+                    self.advance()
+                    left = nodes.Assignment(left, binaryoperations.Add(left, self.parse_assignment()))
+                case lexer.TokenKind.MinusEqual:
+                    self.advance()
+                    left = nodes.Assignment(left, binaryoperations.Subtract(left, self.parse_assignment()))
+                case lexer.TokenKind.MultiplyEqual:
+                    self.advance()
+                    left = nodes.Assignment(left, binaryoperations.Multiply(left, self.parse_assignment()))
+                case lexer.TokenKind.DivideEqual:
+                    self.advance()
+                    left = nodes.Assignment(left, binaryoperations.Divide(left, self.parse_assignment()))
         return left
 
     def parse_comparison(self) -> Node:
@@ -206,6 +207,12 @@ class Parser:
                 case lexer.TokenKind.GreaterEqual:
                     self.advance()
                     left = binaryoperations.GreaterThanOrEqual(left, self.parse_comparison())
+                case lexer.TokenKind.And:
+                    self.advance()
+                    left = binaryoperations.And(left, self.parse_comparison())
+                case lexer.TokenKind.Or:
+                    self.advance()
+                    left = binaryoperations.Or(left, self.parse_comparison())
         return left
 
     def parse_additive(self) -> Node:
@@ -232,7 +239,7 @@ class Parser:
                     left = binaryoperations.Divide(left, self.parse_multiplicative())
         return left
 
-    def parse_atom(self) -> Node:
+    def parse_atom(self):
         if self.current_token is None:
             raise SyntaxError("Unexpected end of file")
         match self.current_token.kind:
@@ -267,6 +274,11 @@ class Parser:
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
+            case lexer.TokenKind.Not:
+                self.advance()
+                out = unaryoperations.Not(self.parse_comparison())
+                self.logger.debug(f"Returning {out}")
+                return out
             case lexer.TokenKind.Identifier:
                 name = self.current_token.value
                 self.advance()
@@ -279,6 +291,16 @@ class Parser:
                             self.advance()
                     self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in function call")
                     out = nodes.FunctionCall(name, args)
+                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.Or:
+                    self.advance()
+                    left = nodes.VariableReference(name)
+                    right = self.parse_comparison()
+                    out = binaryoperations.Or(left, right)
+                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.And:
+                    self.advance()
+                    left = nodes.VariableReference(name)
+                    right = self.parse_comparison()
+                    out = binaryoperations.And(left, right)
                 else:
                     out = nodes.VariableReference(name)
                 self.logger.debug(f"Returning {out}")
