@@ -13,12 +13,22 @@ class Scope:
 class Context:
     def __init__(self):
         self.scopes = []
+        self.functions = {}
 
     def push_scope(self):
         self.scopes.append(Scope())
 
     def pop_scope(self):
         self.scopes.pop()
+
+    def push_function(self, key, value):
+        self.current_scope().functions[key] = value
+
+    def get_function(self, name):
+        for scope in self.scopes[::-1]:
+            if name in scope.functions:
+                return scope.functions[name]
+        raise KeyError(f"Function {name} not found")
 
     def current_scope(self):
         return self.scopes[-1]

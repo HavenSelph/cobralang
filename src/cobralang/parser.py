@@ -108,9 +108,9 @@ class Parser:
 
     def parse_comparison(self) -> Node:
         left = self.parse_additive()
-        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.NotEqual, lexer.TokenKind.Less, lexer.TokenKind.LessEqual, lexer.TokenKind.Greater, lexer.TokenKind.GreaterEqual):
+        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.EqualEqual, lexer.TokenKind.NotEqual, lexer.TokenKind.Less, lexer.TokenKind.LessEqual, lexer.TokenKind.Greater, lexer.TokenKind.GreaterEqual):
             match self.current_token.kind:
-                case lexer.TokenKind.Equal:
+                case lexer.TokenKind.EqualEqual:
                     self.advance()
                     left = binaryoperations.Equals(left, self.parse_comparison())
                 case lexer.TokenKind.NotEqual:
@@ -160,43 +160,31 @@ class Parser:
         match self.current_token.kind:
             case lexer.TokenKind.StringLiteral:
                 out = StringLiteral(self.current_token.value)
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {out}")
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.IntegerLiteral:
                 out = IntegerLiteral(int(self.current_token.value))
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {out}")
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.FloatLiteral:
                 out = FloatLiteral(float(self.current_token.value))
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {out}")
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.BooleanLiteral:
                 out = BooleanLiteral(self.current_token.value == "True")
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {out}")
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.NullLiteral:
                 out = NullLiteral()
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {out}")
                 self.advance()
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.Identifier:
                 name = nodes.VariableReference(self.current_token.value)
-                if not (self.current_token.space_after or self.current_token.newline_after):
-                    raise SyntaxError(f"Expected space or newline after {name}")
                 self.advance()
                 self.logger.debug(f"Returning {name}")
                 return name

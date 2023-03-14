@@ -1,5 +1,5 @@
 from cobralang.interpreter.interpreter import Context, ReplContext
-from os.path import isfile, split
+from os.path import isfile, isdir, split, join
 from pathlib import Path
 import cobralang.parser as parser
 import cobralang.lexer as lexer
@@ -35,8 +35,8 @@ if args.logging_path is None:
     stream_handler.setFormatter(formatter)
     log.addHandler(stream_handler)
 else:
-    logging_path = Path(args.filepath).absolute()
-    if not isfile(logging_path):
+    logging_path = Path(args.logging_path).absolute()
+    if not isdir(join(*split(logging_path)[:-1])):
         raise FileNotFoundError(f"Logging path not found: {logging_path}")
     file_handler = logging.FileHandler(logging_path)
     file_handler.setFormatter(formatter)
@@ -76,8 +76,22 @@ else:
     while True:
         sleep(0.1)
         code = input(">>> ")
-        tokens = lexer.Lexer(code, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).tokenize()
-        program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
-        sleep(0.1)
-        output = program.run(context)
-        print(output)
+        if code == "exit()":
+            break
+        elif code == "clear()":
+            context = ReplContext()
+            continue
+        elif code == "":
+            continue
+
+        try:
+            tokens = lexer.Lexer(code, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).tokenize()
+            program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
+            sleep(0.1)
+            log.debug("Running program...")
+            output = program.run(context)
+            log.debug("Program ran successfully")
+            print(output)
+        except Exception as e:
+            log.exception(e)
+            print(e)

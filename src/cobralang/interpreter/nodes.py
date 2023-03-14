@@ -1,6 +1,6 @@
 from .interpreter import Node, Context
 from .exceptions import ReturnException
-from .datatypes import NullLiteral
+from .datatypes import NullLiteral, Value
 
 
 class VariableReference(Node):
@@ -57,3 +57,48 @@ class Block(Node):
             out = e.value
         ctx.pop_scope()
         return out
+
+
+class Function:
+    def __init__(self, name: str, args: list, body: Node):
+        self.name = name
+        self.args = args
+        self.body = body
+
+    def __repr__(self):
+        return f"Function({self.name} ({self.args}) {{ {self.body} }})"
+
+    def run(self, ctx: Context, args: list[Value]):
+        ctx.push_scope()
+        for name, arg in zip(self.args, args):
+            ctx.current_scope().variables[name] = arg
+        try:
+            result = self.body.run(ctx)
+        except ReturnException as e:
+            result = e.value
+        ctx.pop_scope()
+        return result
+
+
+class FunctionDefinition(Node):
+    def __init__(self, function: Function):
+        self.function = function
+
+    def __repr__(self):
+        return f"FunctionDeclaration({self.function})"
+
+    def run(self, ctx: Context):
+        ctx.push_function(self.function.name, self.function)
+
+
+class FunctionCall(Node):
+    def __init__(self, name: str, args: list[Node]):
+        self.name = name
+        self.args = args
+
+    def __repr__(self):
+        return f"{self.name}({', '.join(map(repr, self.args))})"
+
+    def run(self, ctx: Context):
+        args = [arg.run(ctx) for arg in self.args]
+        return ctx.get_function(self.name).run(ctx, args)

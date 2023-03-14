@@ -87,6 +87,7 @@ class TokenKind(Enum):
     Print = auto()
     Return = auto()
     Let = auto()
+    Fn = auto()
 
     # Blocks
     If = auto()
@@ -106,6 +107,7 @@ keywords = {
     "print": TokenKind.Print,
     "return": TokenKind.Return,
     "let": TokenKind.Let,
+    "fn": TokenKind.Fn,
 
     # blocks
     "if": TokenKind.If,
