@@ -12,7 +12,7 @@ class Scope:
 
 class Context:
     def __init__(self):
-        self.scopes = [Scope()]
+        self.scopes = []
 
     def push_scope(self):
         self.scopes.append(Scope())
@@ -49,72 +49,14 @@ class Context:
         return f"Context({self.scopes})"
 
 
+class ReplContext(Context):
+    def pop_scope(self):
+        if len(self.scopes) == 1:
+            return
+        super().pop_scope()
+
+
 class Node(ABC):
     @abstractmethod
     def run(self, ctx: Context):
         pass
-
-
-class VariableReference(Node):
-    def __init__(self, name: str):
-        self.name = name
-
-    def __repr__(self):
-        return self.name
-
-    def run(self, ctx: Context):
-        return ctx[self.name]
-
-
-class VariableDeclaration(Node):
-    def __init__(self, name: str, value: Node):
-        self.name = name
-        self.value = value
-
-    def __repr__(self):
-        return f"let {self.name} = {self.value}"
-
-    def run(self, ctx: Context):
-        ctx.current_scope().variables[self.name] = self.value.run(ctx)
-
-
-class Assignment(Node):
-    def __init__(self, left: Node, right: Node):
-        self.left = left
-        self.right = right
-
-    def __repr__(self):
-        return f"{self.left} = {self.right}"
-
-    def run(self, ctx: Context):
-        if not isinstance(self.left, VariableReference):
-            raise TypeError("Can only assign to a variable")
-        ctx[self.left.name] = self.right.run(ctx)
-
-
-class Block(Node):
-    def __init__(self, statements: list[Node]):
-        self.statements = statements
-
-    def __repr__(self):
-        return f"{{ {self.statements} }}"
-
-    def run(self, ctx: Context):
-        ctx.push_scope()
-        out = None
-        for statement in self.statements:
-            out = statement.run(ctx)
-        ctx.pop_scope()
-        return out
-
-
-class PrintStatement(Node):
-    def __init__(self, value: Node):
-        self.value = value
-
-    def __repr__(self):
-        return f"print {self.value}"
-
-    def run(self, ctx: Context):
-        print(self.value.run(ctx))
-        return None

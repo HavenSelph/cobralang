@@ -15,9 +15,24 @@ class BinaryOp(Node):
         return self.run_func(self.left.run(ctx), self.right.run(ctx))
 
 
+class And(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "and", lambda a, b: a and b)
+
+
+class Or(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "or", lambda a, b: a or b)
+
+
 class GreaterThan(BinaryOp):
     def __init__(self, left: Node, right: Node):
         super().__init__(left, right, ">", lambda a, b: a > b)
+
+
+class GreaterThanOrEqual(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, ">=", lambda a, b: a >= b)
 
 
 class LessThan(BinaryOp):
@@ -25,9 +40,19 @@ class LessThan(BinaryOp):
         super().__init__(left, right, "<", lambda a, b: a < b)
 
 
+class LessThanOrEqual(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "<=", lambda a, b: a <= b)
+
+
 class Equals(BinaryOp):
     def __init__(self, left: Node, right: Node):
         super().__init__(left, right, "==", lambda a, b: a == b)
+
+
+class NotEquals(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "!=", lambda a, b: a != b)
 
 
 class Add(BinaryOp):
