@@ -60,13 +60,16 @@ class TokenKind(Enum):
     Plus = auto()
     Minus = auto()
     Multiply = auto()
+    Power = auto()
     Divide = auto()
+    FloorDivide = auto()
     Mod = auto()
     Equal = auto()
     PlusEqual = auto()
     MinusEqual = auto()
     MultiplyEqual = auto()
     DivideEqual = auto()
+    ModEqual = auto()
 
     # Comparison
     EqualEqual = auto()
@@ -91,6 +94,7 @@ class TokenKind(Enum):
     Comma = auto()
 
     # Statements
+    Import = auto()
     Return = auto()
     Let = auto()
     Fn = auto()
@@ -116,6 +120,7 @@ keywords = {
     "or": TokenKind.Or,
 
     # statements
+    "import": TokenKind.Import,
     "return": TokenKind.Return,
     "let": TokenKind.Let,
     "fn": TokenKind.Fn,
@@ -268,16 +273,10 @@ class Lexer:
                     else:
                         self.logger.debug("Found !, pushing Not token to stack")
                         tokens.append(Token(TokenKind.Not, position_end=self.position, position_start=self.position))
-                case "/":
-                    self.logger.debug("Found /, checking for comment")
-                    self.advance()
-                    if self.current_char == "/":
-                        self.logger.debug("Found //, skipping to end of line")
-                        while self.current_char is not None and self.current_char != "\n":
-                            self.advance()
-                    else:
-                        self.logger.debug("Found /, pushing Divide token to stack")
-                        tokens.append(Token(TokenKind.Divide, position_end=self.position, position_start=self.position))
+                case "#":
+                    self.logger.debug("Found #, skipping to end of line")
+                    while self.current_char != "\n":
+                        self.advance()
                 case "=":
                     self.logger.debug("Found =, checking for equality")
                     self.advance()
@@ -318,6 +317,30 @@ class Lexer:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.Plus if char == "+" else TokenKind.Minus,
+                            position_end=self.position, position_start=self.position
+                        ))
+                case char if char == "*" or char == "/" or char == "%":
+                    self.logger.debug(f"Found {self.current_char}, checking for equals")
+                    self.advance()
+                    if self.current_char == "=":
+                        self.logger.debug(f"Found =, pushing {char}= token to stack")
+                        tokens.append(Token(
+                            TokenKind.MultiplyEqual if char == "*" else TokenKind.DivideEqual if char == "/" else TokenKind.ModEqual,
+                            position_end=self.position, position_start=self.position
+                        ))
+                        self.advance()
+                    elif self.current_char == "*" and char=="*":
+                        self.logger.debug(f"Found *, pushing ** token to stack")
+                        tokens.append(Token(TokenKind.Power, position_end=self.position, position_start=self.position))
+                        self.advance()
+                    elif self.current_char == "/" and char=="/":
+                        self.logger.debug(f"Found /, pushing // token to stack")
+                        tokens.append(Token(TokenKind.FloorDivide, position_end=self.position, position_start=self.position))
+                        self.advance()
+                    else:
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.Multiply if char == "*" else TokenKind.Divide if char == "/" else TokenKind.Mod,
                             position_end=self.position, position_start=self.position
                         ))
                 # All characters

@@ -3,6 +3,7 @@ from .interpreter.interpreter import Node
 from .interpreter.datatypes import *
 from .interpreter.statements import *
 from .interpreter import nodes, binaryoperations, unaryoperations
+from .interpreter.builtins import all_builtins
 import logging
 
 
@@ -10,6 +11,7 @@ class Parser:
     def __init__(self, tokens: list[lexer.Token, ...], filename: str="<stdin>", logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
         self.tokens = tokens
         self.filename = filename
+        self.log_file = log_file
         self.index = -1
         self.current_token = None
         self.next_token = None
@@ -36,9 +38,9 @@ class Parser:
         self.logger.info("Parser initialized successfully")
         self.advance()
 
-    def advance(self):
+    def advance(self, i: int=1):
         self.logger.debug(f"Advancing index from {self.index} to {self.index+1}")
-        self.index += 1
+        self.index += i
         if self.index >= len(self.tokens):
             self.current_token = None
             self.next_token = None
@@ -108,6 +110,31 @@ class Parser:
                 out = nodes.FunctionDefinition(nodes.Function(name, args, body))
                 self.logger.debug(f"Returning {out}")
                 return out
+            case lexer.TokenKind.Import:
+                self.logger.debug("Parsing import statement")
+                self.advance()
+                name = all_builtins.get(self.current_token.value, self.current_token.value)
+                if name[-3:] != ".cb":
+                    name += ".cb"
+                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
+                self.logger.debug(f"Attempting to locate file {name}")
+                from os import path
+                from pathlib import Path
+                path = Path("./" + name).absolute()
+                if not path.exists():
+                    raise FileNotFoundError(f"File {name} not found")
+                self.logger.debug(f"File {name} found")
+                self.logger.debug(f"Attempting to parse file {name}")
+                with open(path, "r") as f:
+                    code = f.read()
+                _lexer = lexer.Lexer(code, filename=f"<name>", logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file)
+                # insert tokens into token list
+                tmp = "[\n" + "\n".join([repr(token) for token in self.tokens]) + "\n]"
+                tokens = _lexer.tokenize()
+                self.tokens = self.tokens[:self.index] + tokens + self.tokens[self.index:]
+                self.advance(0)
+                self.logger.debug(f"File {name} added to token list")
+                return self.parse_statement()
             # case lexer.TokenKind.Print:
             #     self.logger.debug("Parsing print statement")
             #     self.advance()
@@ -183,6 +210,9 @@ class Parser:
                 case lexer.TokenKind.DivideEqual:
                     self.advance()
                     left = nodes.Assignment(left, binaryoperations.Divide(left, self.parse_assignment()))
+                case lexer.TokenKind.ModEqual:
+                    self.advance()
+                    left = nodes.Assignment(left, binaryoperations.Modulo(left, self.parse_assignment()))
         return left
 
     def parse_comparison(self) -> Node:
@@ -229,14 +259,23 @@ class Parser:
 
     def parse_multiplicative(self) -> Node:
         left = self.parse_atom()
-        while self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Multiply, lexer.TokenKind.Divide):
+        while self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Multiply, lexer.TokenKind.Power, lexer.TokenKind.Divide, lexer.TokenKind.FloorDivide, lexer.TokenKind.Mod):
             match self.current_token.kind:
                 case lexer.TokenKind.Multiply:
                     self.advance()
                     left = binaryoperations.Multiply(left, self.parse_multiplicative())
+                case lexer.TokenKind.Power:
+                    self.advance()
+                    left = binaryoperations.Power(left, self.parse_multiplicative())
                 case lexer.TokenKind.Divide:
                     self.advance()
                     left = binaryoperations.Divide(left, self.parse_multiplicative())
+                case lexer.TokenKind.FloorDivide:
+                    self.advance()
+                    left = binaryoperations.FloorDivide(left, self.parse_multiplicative())
+                case lexer.TokenKind.Mod:
+                    self.advance()
+                    left = binaryoperations.Modulo(left, self.parse_multiplicative())
         return left
 
     def parse_atom(self):

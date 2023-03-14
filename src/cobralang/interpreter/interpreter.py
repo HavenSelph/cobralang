@@ -14,7 +14,7 @@ class Scope:
 class Context:
     def __init__(self):
         self.scopes = [Scope()]
-        from .builtins.std import std_functions
+        from .builtins.globals import std_functions
         for name, function in std_functions.items():
             self.push_function(name, function)
 

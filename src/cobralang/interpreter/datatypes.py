@@ -86,8 +86,20 @@ class Integer(Value):
     def __mul__(self, other):
         return Integer(self.value * other.value)
 
+    def __pow__(self, power, modulo=None):
+        return Integer(self.value ** power.value)
+
     def __truediv__(self, other):
         return Float(self.value / other.value)
+
+    def __floordiv__(self, other):
+        return Integer(self.value // other.value)
+
+    def __floor__(self):
+        return Integer(self.value // 1)
+
+    def __ceil__(self):
+        return Integer(self.value // 1 + 1)
 
     def __lt__(self, other):
         return Boolean(self.value < other.value)
@@ -132,8 +144,20 @@ class Float(Value):
     def __mul__(self, other):
         return Float(self.value * other.value)
 
+    def __pow__(self, power, modulo=None):
+        return Float(self.value ** power.value)
+
     def __truediv__(self, other):
         return Float(self.value / other.value)
+
+    def __floordiv__(self, other):
+        return Float(self.value // other.value)
+
+    def __floor__(self):
+        return Float(self.value // 1)
+
+    def __ceil__(self):
+        return Float(self.value // 1 + 1)
 
     def __lt__(self, other):
         return Boolean(self.value < other.value)

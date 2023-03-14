@@ -70,9 +70,19 @@ class Multiply(BinaryOp):
         super().__init__(left, right, "*", lambda a, b: a * b)
 
 
+class Power(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "**", lambda a, b: a ** b)
+
+
 class Divide(BinaryOp):
     def __init__(self, left: Node, right: Node):
         super().__init__(left, right, "/", lambda a, b: a / b)
+
+
+class FloorDivide(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "//", lambda a, b: a // b)
 
 
 class Modulo(BinaryOp):
