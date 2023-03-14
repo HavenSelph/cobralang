@@ -55,6 +55,11 @@ class ReplContext(Context):
             return
         super().pop_scope()
 
+    def push_scope(self):
+        if len(self.scopes) == 1:
+            return
+        super().push_scope()
+
 
 class Node(ABC):
     @abstractmethod
