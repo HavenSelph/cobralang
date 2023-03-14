@@ -22,12 +22,12 @@ argparser = ArgumentParser(
 )
 
 argparser.add_argument('--filepath', help="The path to the file to be interpreted.", type=str, default=None)
-argparser.add_argument('--logging_level', default=log_levels["NONE"], help="The logging level to use. Defaults to 51 (no logs).", choices=log_levels.keys(), type=str)
+argparser.add_argument('--logging_level', help="The logging level to use. Defaults to 51 (no logs).", choices=log_levels.keys(), type=str)
 argparser.add_argument('--logging_path', default=None, help="The path to the log file. Defaults to the current directory.", type=str)
 args = argparser.parse_args()
 
 log = logging.getLogger("CobraLang")
-log.setLevel(log_levels[args.logging_level])
+log.setLevel(log_levels["NONE"])
 
 formatter = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 if args.logging_path is None:
@@ -42,7 +42,7 @@ else:
     file_handler.setFormatter(formatter)
     log.addHandler(file_handler)
 
-if log_levels[args.logging_level] <= 10:
+if log.getEffectiveLevel() <= 10:
     log.debug(f"Debug mode enabled. Note that this will not show what the interpreter is doing, only what the parser/lexer is doing.")
 
 log.info("CobraLang runner started successfully")
