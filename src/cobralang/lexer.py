@@ -63,6 +63,15 @@ class TokenKind(Enum):
     Divide = auto()
     Equal = auto()
 
+    # Comparison
+    EqualEqual = auto()
+    Not = auto()
+    NotEqual = auto()
+    Greater = auto()
+    GreaterEqual = auto()
+    Less = auto()
+    LessEqual = auto()
+
     # Delimiters
     LeftParen = auto()
     RightParen = auto()
@@ -74,11 +83,18 @@ class TokenKind(Enum):
     Colon = auto()
     Comma = auto()
 
-    # Misc
-    NewLine = auto()
-
     # Statements
     Print = auto()
+    Return = auto()
+    Let = auto()
+
+    # Blocks
+    If = auto()
+    Else = auto()
+    While = auto()
+
+    # EOF
+    EOF = auto()
 
 
 keywords = {
@@ -88,6 +104,13 @@ keywords = {
 
     # statements
     "print": TokenKind.Print,
+    "return": TokenKind.Return,
+    "let": TokenKind.Let,
+
+    # blocks
+    "if": TokenKind.If,
+    "else": TokenKind.Else,
+    "while": TokenKind.While,
 }
 
 single_character_tokens = {
@@ -115,11 +138,12 @@ class Token:
     position_start: Position
     value: str = None
     space_after: bool = False
+    newline_after: bool = False
 
     def __repr__(self):
         if self.value:
-            return f"Token({self.kind}, {self.value!r})"
-        return f"Token({self.kind})"
+            return f"Token({self.kind}, {self.value!r}, {self.space_after=}, {self.newline_after=})"
+        return f"Token({self.kind}, {self.space_after=}, {self.newline_after=})"
 
 
 class LexerError(Exception):
@@ -146,23 +170,22 @@ class InvalidStringError(LexerError):
     pass
 
 
-def make_lexer_from_file_path(file_path: str, start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
+def make_lexer_from_file_path(file_path: str, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
     if not isfile(file_path):
         raise FileNotFoundError(f"File {file_path} does not exist")
     with open(file_path) as file:
         text = file.read()
-    return Lexer(text, f"<{split(file_path)[-1]}>", start, logger, logging_level, log_file)
+    return Lexer(text, f"<{split(file_path)[-1]}>", logger, logging_level, log_file)
 
 
 class Lexer:
-    def __init__(self, text: str, filename: str="<stdin>", start: int=0, logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
+    def __init__(self, text: str, filename: str="<stdin>", logger: logging.Logger=None, logging_level: int=51, log_file: str=None):
         self.filename = filename
         self.text = text
         if self.text == "":
             raise ValueError("Cannot initialize lexer with empty text")
         self.current_char = None
-        self.position = Position(start-1, 0, start-1)
-        self.advance()
+        self.position = Position(-1, 1, 0)
         if logger is None:
             self.logger = logger
             self.logger = logging.getLogger("Lexer")
@@ -180,8 +203,9 @@ class Lexer:
                 stream_handler = logging.StreamHandler()
                 stream_handler.setFormatter(formatter)
                 self.logger.addHandler(stream_handler)
-        self.logger.debug(f"Lexer(\n\t{filename=},\n\t{start=},\n\t{logging_level=},\n\t{log_file=}\n)")
+        self.logger.debug(f"Lexer(\n{filename=},\n{logging_level=},\n{log_file=}\n)")
         self.logger.info("Lexer initialized successfully")
+        self.advance()
 
     def advance(self):
         if self.position >= len(self.text)-1:
@@ -189,14 +213,16 @@ class Lexer:
             self.current_char = None
         else:
             self.position.index += 1
+            self.position.column += 1
             self.current_char = self.text[self.position.index]
             if self.current_char == "\n":
                 self.position.line += 1
                 self.position.column = 0
+        self.logger.debug(f"Advanced to {self.position}")
 
     def tokenize(self) -> list[Token]:
-        # Initialize tokens list, SOF token is only there so that we can always access tokens[-1]
-        tokens = [Token(TokenKind.NewLine, Position(-1, 0, -1), Position(-1, 0, -1))]
+        # Initialize tokens list, EOF token is only there so that we can always access tokens[-1], removed at return
+        tokens = [Token(TokenKind.EOF, Position(-1, 0, -1), Position(-1, 0, -1))]
 
         def push_token(kind: TokenKind, value: str, start: Position=None):
             tokens.append(Token(
@@ -207,14 +233,24 @@ class Lexer:
         while self.current_char is not None:
             match self.current_char:
                 case "\n":
-                    self.logger.debug("Found newline, pushing NewLine token to stack")
-                    tokens.append(Token(TokenKind.NewLine, position_end=self.position, position_start=self.position))
+                    self.logger.debug(f"Found newline, updating {tokens[-1]}.newline_after to True")
+                    tokens[-1].newline_after = True
                     self.advance()
                 case " ":
                     self.logger.debug(f"Found whitespace, updating {tokens[-1]}.space_after to True")
                     tokens[-1].space_after = True
                     self.advance()
                 # Special characters
+                case "!":
+                    self.logger.debug("Found !, checking for not equal")
+                    self.advance()
+                    if self.current_char == "=":
+                        self.logger.debug("Found !=, pushing NotEqual token to stack")
+                        tokens.append(Token(TokenKind.NotEqual, position_end=self.position, position_start=self.position))
+                        self.advance()
+                    else:
+                        self.logger.debug("Found !, pushing Not token to stack")
+                        tokens.append(Token(TokenKind.Not, position_end=self.position, position_start=self.position))
                 case "/":
                     self.logger.debug("Found /, checking for comment")
                     self.advance()
@@ -225,6 +261,33 @@ class Lexer:
                     else:
                         self.logger.debug("Found /, pushing Divide token to stack")
                         tokens.append(Token(TokenKind.Divide, position_end=self.position, position_start=self.position))
+                case "=":
+                    self.logger.debug("Found =, checking for equality")
+                    self.advance()
+                    if self.current_char == "=":
+                        self.logger.debug("Found ==, pushing Equals token to stack")
+                        tokens.append(Token(TokenKind.EqualEqual, position_end=self.position, position_start=self.position))
+                        self.advance()
+                    else:
+                        self.logger.debug("Found =, pushing Assign token to stack")
+                        tokens.append(Token(TokenKind.Equal, position_end=self.position, position_start=self.position))
+                case char if char == "<" or char == ">":
+                    self.logger.debug(f"Found {self.current_char}, checking for equality")
+                    self.advance()
+                    if self.current_char == "=":
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.LessEqual if char == "<" else TokenKind.GreaterEqual,
+                            position_end=self.position, position_start=self.position
+                        ))
+                        self.advance()
+                    else:
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.Less if char == "<" else TokenKind.Greater,
+                            position_end=self.position, position_start=self.position
+                        ))
+
                 # All characters
                 case char if char in single_character_tokens:
                     self.logger.debug(f"Pushing Token({single_character_tokens[char]}) to stack")
@@ -282,7 +345,7 @@ class Lexer:
                 case char:
                     self.logger.error(f"Illegal character '{char}' at {self.position}")
                     raise IllegalCharError(f"Illegal character '{char}' at {self.position}", self.position, self.position)
-        tokens.append(Token(TokenKind.NewLine, position_end=self.position, position_start=self.position))
+        tokens[-1].newline_after = True
         self.logger.debug("Reached end of file, returning tokens")
         if self.logger.getEffectiveLevel() >= logging.DEBUG:
             tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"

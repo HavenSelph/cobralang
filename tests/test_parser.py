@@ -1,5 +1,5 @@
 from unittest import TestCase
-from src.cobralang.parser import Parser
+from testing import parser
 
 
 # test this stuff
