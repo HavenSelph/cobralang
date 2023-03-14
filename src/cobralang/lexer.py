@@ -75,13 +75,19 @@ class TokenKind(Enum):
     Comma = auto()
 
     # Misc
-    SOF = auto()
+    NewLine = auto()
+
+    # Statements
+    Print = auto()
 
 
 keywords = {
     "True": TokenKind.BooleanLiteral,
     "False": TokenKind.BooleanLiteral,
-    "Null": TokenKind.NullLiteral
+    "Null": TokenKind.NullLiteral,
+
+    # statements
+    "print": TokenKind.Print,
 }
 
 single_character_tokens = {
@@ -109,7 +115,6 @@ class Token:
     position_start: Position
     value: str = None
     space_after: bool = False
-    new_line_after: bool = False
 
     def __repr__(self):
         if self.value:
@@ -163,20 +168,20 @@ class Lexer:
             self.logger = logging.getLogger("Lexer")
         else:
             self.logger = logger.getChild("Lexer")
+            self.logger.propagate = True
         self.logger.setLevel(logging_level)
-        formatter = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s: %(message)s")
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
-        if log_file is not None:
-            file_handler = logging.FileHandler(log_file)
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-        else:
-            stream_handler = logging.StreamHandler()
-            stream_handler.setFormatter(formatter)
-            self.logger.addHandler(stream_handler)
+        if not self.logger.hasHandlers():
+            formatter = logging.Formatter("%(asctime)s [%(name)s] %(levelname)s: %(message)s")
+            if log_file is not None:
+                file_handler = logging.FileHandler(log_file)
+                file_handler.setFormatter(formatter)
+                self.logger.addHandler(file_handler)
+            else:
+                stream_handler = logging.StreamHandler()
+                stream_handler.setFormatter(formatter)
+                self.logger.addHandler(stream_handler)
+        self.logger.debug(f"Lexer(\n\t{filename=},\n\t{start=},\n\t{logging_level=},\n\t{log_file=}\n)")
         self.logger.info("Lexer initialized successfully")
-        self.logger.debug(f"Lexer (\n\t{filename=},\n\t{start=},\n\t{logging_level=},\n\t{log_file=}\n)")
 
     def advance(self):
         if self.position >= len(self.text)-1:
@@ -191,7 +196,7 @@ class Lexer:
 
     def tokenize(self) -> list[Token]:
         # Initialize tokens list, SOF token is only there so that we can always access tokens[-1]
-        tokens = [Token(TokenKind.SOF, Position(-1, 0, -1), Position(-1, 0, -1))]
+        tokens = [Token(TokenKind.NewLine, Position(-1, 0, -1), Position(-1, 0, -1))]
 
         def push_token(kind: TokenKind, value: str, start: Position=None):
             tokens.append(Token(
@@ -202,13 +207,25 @@ class Lexer:
         while self.current_char is not None:
             match self.current_char:
                 case "\n":
-                    self.logger.debug(f"Found newline, updating {tokens[-1]}.new_line_after to True")
-                    tokens[-1].new_line_after = True
+                    self.logger.debug("Found newline, pushing NewLine token to stack")
+                    tokens.append(Token(TokenKind.NewLine, position_end=self.position, position_start=self.position))
                     self.advance()
                 case " ":
                     self.logger.debug(f"Found whitespace, updating {tokens[-1]}.space_after to True")
                     tokens[-1].space_after = True
                     self.advance()
+                # Special characters
+                case "/":
+                    self.logger.debug("Found /, checking for comment")
+                    self.advance()
+                    if self.current_char == "/":
+                        self.logger.debug("Found //, skipping to end of line")
+                        while self.current_char is not None and self.current_char != "\n":
+                            self.advance()
+                    else:
+                        self.logger.debug("Found /, pushing Divide token to stack")
+                        tokens.append(Token(TokenKind.Divide, position_end=self.position, position_start=self.position))
+                # All characters
                 case char if char in single_character_tokens:
                     self.logger.debug(f"Pushing Token({single_character_tokens[char]}) to stack")
                     tokens.append(Token(
@@ -265,6 +282,7 @@ class Lexer:
                 case char:
                     self.logger.error(f"Illegal character '{char}' at {self.position}")
                     raise IllegalCharError(f"Illegal character '{char}' at {self.position}", self.position, self.position)
+        tokens.append(Token(TokenKind.NewLine, position_end=self.position, position_start=self.position))
         self.logger.debug("Reached end of file, returning tokens")
         if self.logger.getEffectiveLevel() >= logging.DEBUG:
             tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"
