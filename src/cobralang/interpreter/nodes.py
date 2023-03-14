@@ -1,5 +1,5 @@
 from .interpreter import Node, Context
-from .exceptions import ReturnException
+from .exceptions import ReturnException, StopException
 from .datatypes import NullLiteral, Value
 
 
@@ -59,6 +59,25 @@ class Block(Node):
         return out
 
 
+class Program(Block):
+    def __init__(self, statements: list[Node]):
+        super().__init__(statements)
+
+    def __repr__(self):
+        return f"Program({self.statements})"
+
+    def run(self, ctx: Context):
+        out = NullLiteral()
+        try:
+            for statement in self.statements:
+                out = statement.run(ctx)
+        except ReturnException as e:
+            out = e.value
+        except StopException as e:
+            exit(e.code)
+        return out
+
+
 class Function:
     def __init__(self, name: str, args: list, body: Node):
         self.name = name
@@ -101,4 +120,6 @@ class FunctionCall(Node):
 
     def run(self, ctx: Context):
         args = [arg.run(ctx) for arg in self.args]
+        if len(self.args) != len(ctx.get_function(self.name).args):
+            raise TypeError(f"Function '{self.name}' expects {len(ctx.get_function(self.name).args)} argument(s) ({', '.join(ctx.get_function(self.name).args)}), {len(self.args)} argument(s) ({', '.join(map(repr, self.args))}) were passed")
         return ctx.get_function(self.name).run(ctx, args)

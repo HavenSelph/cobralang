@@ -3,18 +3,6 @@ from .exceptions import ReturnException
 from .nodes import Block
 
 
-class PrintStatement(Node):
-    def __init__(self, value: Node):
-        self.value = value
-
-    def __repr__(self):
-        return f"print {self.value}"
-
-    def run(self, ctx: Context):
-        print(self.value.run(ctx))
-        return None
-
-
 class ReturnStatement(Node):
     def __init__(self, value: Node):
         self.value = value
@@ -27,7 +15,7 @@ class ReturnStatement(Node):
 
 
 class IfStatement(Node):
-    def __init__(self, condition: Node, body: Block, else_body: Block):
+    def __init__(self, condition: Node, body: Block, else_body: Block=Block([])):
         self.condition = condition
         self.body = body
         self.else_body = else_body

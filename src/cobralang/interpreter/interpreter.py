@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from .exceptions import StopException
 
 
 class Scope:
@@ -12,8 +13,10 @@ class Scope:
 
 class Context:
     def __init__(self):
-        self.scopes = []
-        self.functions = {}
+        self.scopes = [Scope()]
+        from .builtins.std import std_functions
+        for name, function in std_functions.items():
+            self.push_function(name, function)
 
     def push_scope(self):
         self.scopes.append(Scope())
@@ -57,18 +60,6 @@ class Context:
 
     def __repr__(self):
         return f"Context({self.scopes})"
-
-
-class ReplContext(Context):
-    def pop_scope(self):
-        if len(self.scopes) == 1:
-            return
-        super().pop_scope()
-
-    def push_scope(self):
-        if len(self.scopes) == 1:
-            return
-        super().push_scope()
 
 
 class Node(ABC):

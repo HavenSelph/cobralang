@@ -57,15 +57,25 @@ class NullLiteral(Node):
 
 
 class Value:
-    pass
+    def __init__(self, value):
+        self.value = value
 
 
 class Integer(Value):
     def __init__(self, value: int):
-        self.value = value
+        super().__init__(value)
 
     def __repr__(self):
         return str(self.value)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __float__(self):
+        return float(self.value)
+
+    def __bool__(self):
+        return self.value == 0
 
     def __add__(self, other):
         return Integer(self.value + other.value)
@@ -77,13 +87,19 @@ class Integer(Value):
         return Integer(self.value * other.value)
 
     def __truediv__(self, other):
-        return Integer(self.value / other.value)
+        return Float(self.value / other.value)
 
     def __lt__(self, other):
         return Boolean(self.value < other.value)
 
+    def __le__(self, other):
+        return Boolean(self.value <= other.value)
+
     def __gt__(self, other):
         return Boolean(self.value > other.value)
+
+    def __ge__(self, other):
+        return Boolean(self.value >= other.value)
 
     def __eq__(self, other):
         return Boolean(self.value == other.value)
@@ -94,10 +110,18 @@ class Integer(Value):
 
 class Float(Value):
     def __init__(self, value: float):
-        self.value = value
+        super().__init__(value)
 
     def __repr__(self):
         return str(self.value)
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __bool__(self):
+        return self.value != 0.0
+
+    # rt
 
     def __add__(self, other):
         return Float(self.value + other.value)
@@ -114,8 +138,14 @@ class Float(Value):
     def __lt__(self, other):
         return Boolean(self.value < other.value)
 
+    def __le__(self, other):
+        return Boolean(self.value <= other.value)
+
     def __gt__(self, other):
         return Boolean(self.value > other.value)
+
+    def __ge__(self, other):
+        return Boolean(self.value >= other.value)
 
     def __eq__(self, other):
         return Boolean(self.value == other.value)
@@ -126,10 +156,18 @@ class Float(Value):
 
 class String(Value):
     def __init__(self, value: str):
-        self.value = value
+        super().__init__(value)
 
     def __repr__(self):
         return f'"{self.value}"'
+
+    def __str__(self):
+        return self.value
+
+    def __bool__(self):
+        return self.value!=""
+
+    # rt
 
     def __add__(self, other):
         return String(self.value + other.value)
@@ -146,13 +184,38 @@ class String(Value):
 
 class Boolean(Value):
     def __init__(self, value: bool):
-        self.value = value
+        super().__init__(value)
 
     def __repr__(self):
-        return f'{self.value}'
+        return str(self.value)
+
+    def __str__(self):
+        return self.__repr__()
+
+    # rt
+    def __int__(self):
+        if self.value:
+            return Integer(1)
+        return Integer(0)
 
     def __eq__(self, other):
         return Boolean(self.value == other.value)
 
     def __bool__(self):
         return self.value
+
+
+class Null(Value):
+    def __init__(self):
+        super().__init__(value=None)
+
+    def __repr__(self):
+        return 'null'
+
+    # rt
+    def __bool__(self):
+        return Boolean(False)
+
+    def __eq__(self, other):
+        return Boolean(self.value == other.value)
+

@@ -1,8 +1,8 @@
-print("hello world")
-let x = 10
-let y = 20
-x + y
-
-fn add(a, b) {
-    return a + b
+let x = 0
+while (x <= 10) {
+    print(x)
+    x += 1
 }
+x = True
+x = not x
+print(x)

@@ -61,7 +61,12 @@ class TokenKind(Enum):
     Minus = auto()
     Multiply = auto()
     Divide = auto()
+    Mod = auto()
     Equal = auto()
+    PlusEqual = auto()
+    MinusEqual = auto()
+    MultiplyEqual = auto()
+    DivideEqual = auto()
 
     # Comparison
     EqualEqual = auto()
@@ -71,6 +76,8 @@ class TokenKind(Enum):
     GreaterEqual = auto()
     Less = auto()
     LessEqual = auto()
+    And = auto()
+    Or = auto()
 
     # Delimiters
     LeftParen = auto()
@@ -84,13 +91,13 @@ class TokenKind(Enum):
     Comma = auto()
 
     # Statements
-    Print = auto()
     Return = auto()
     Let = auto()
     Fn = auto()
 
     # Blocks
     If = auto()
+    Elif = auto()
     Else = auto()
     While = auto()
 
@@ -103,14 +110,19 @@ keywords = {
     "False": TokenKind.BooleanLiteral,
     "Null": TokenKind.NullLiteral,
 
+    # comparison
+    "not": TokenKind.Not,
+    "and": TokenKind.And,
+    "or": TokenKind.Or,
+
     # statements
-    "print": TokenKind.Print,
     "return": TokenKind.Return,
     "let": TokenKind.Let,
     "fn": TokenKind.Fn,
 
     # blocks
     "if": TokenKind.If,
+    "elif": TokenKind.Elif,
     "else": TokenKind.Else,
     "while": TokenKind.While,
 }
@@ -120,6 +132,7 @@ single_character_tokens = {
     "-": TokenKind.Minus,
     "*": TokenKind.Multiply,
     "/": TokenKind.Divide,
+    "%": TokenKind.Mod,
     "=": TokenKind.Equal,
     "(": TokenKind.LeftParen,
     ")": TokenKind.RightParen,
@@ -130,6 +143,8 @@ single_character_tokens = {
     ";": TokenKind.Semicolon,
     ":": TokenKind.Colon,
     ",": TokenKind.Comma,
+    "|": TokenKind.Or,
+    "&": TokenKind.And,
 }
 
 
@@ -289,7 +304,22 @@ class Lexer:
                             TokenKind.Less if char == "<" else TokenKind.Greater,
                             position_end=self.position, position_start=self.position
                         ))
-
+                case char if char == "+" or char == "-":
+                    self.logger.debug(f"Found {self.current_char}, checking for equals")
+                    self.advance()
+                    if self.current_char == "=":
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.PlusEqual if char == "+" else TokenKind.MinusEqual,
+                            position_end=self.position, position_start=self.position
+                        ))
+                        self.advance()
+                    else:
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.Plus if char == "+" else TokenKind.Minus,
+                            position_end=self.position, position_start=self.position
+                        ))
                 # All characters
                 case char if char in single_character_tokens:
                     self.logger.debug(f"Pushing Token({single_character_tokens[char]}) to stack")

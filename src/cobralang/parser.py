@@ -57,13 +57,22 @@ class Parser:
             raise SyntaxError(f"{error_message}: {self.current_token.kind} != {kind}")
 
     def parse(self) -> Node:
-        return self.parse_block()
+        return self.parse_program()
 
-    def parse_block(self) -> Node:
+    def parse_program(self) -> nodes.Program:
         block = []
         while self.current_token is not None:
             block.append(self.parse_statement())
-            if self.current_token is not None and not self.tokens[self.index-1].newline_after:
+            if self.current_token is not None and not self.tokens[self.index-1].newline_after and (self.next_token is not None and self.next_token.kind != lexer.TokenKind.RightBrace):
+                raise SyntaxError(f"Expected newline after {block[-1]}")
+            self.logger.debug(f"Pushed {block[-1]} to block")
+        return nodes.Program(block)
+
+    def parse_block(self) -> Node | Block:
+        block = []
+        while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightBrace:
+            block.append(self.parse_statement())
+            if self.current_token is not None and not self.tokens[self.index-1].newline_after and (self.next_token is not None and self.next_token.kind != lexer.TokenKind.RightBrace):
                 raise SyntaxError(f"Expected newline after {block[-1]}")
             self.logger.debug(f"Pushed {block[-1]} to block")
         return nodes.Block(block)
@@ -80,18 +89,74 @@ class Parser:
                 out = nodes.VariableDeclaration(name, value)
                 self.logger.debug(f"Returning {out}")
                 return out
-            case lexer.TokenKind.Print:
-                self.logger.debug("Parsing print statement")
+            case lexer.TokenKind.Fn:
+                self.logger.debug("Parsing function declaration")
                 self.advance()
-                self.consume(lexer.TokenKind.LeftParen, "Expected '(' after 'print' statement")
-                out = PrintStatement(self.parse_expression())
-                self.consume(lexer.TokenKind.RightParen, "Expected ')' after 'print' statement")
+                name = self.current_token.value
+                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'fn' statement")
+                self.consume(lexer.TokenKind.LeftParen, "Expected '(' after identifier in 'fn' statement")
+                args = []
+                while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                    args.append(self.current_token.value)
+                    self.consume(lexer.TokenKind.Identifier, "Expected identifier in 'fn' statement")
+                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                        self.advance()
+                self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in 'fn' statement")
+                self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after arguments in 'fn' statement")
+                body = self.parse_block()
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after function body in 'fn' statement")
+                out = nodes.FunctionDefinition(nodes.Function(name, args, body))
                 self.logger.debug(f"Returning {out}")
                 return out
+            # case lexer.TokenKind.Print:
+            #     self.logger.debug("Parsing print statement")
+            #     self.advance()
+            #     self.consume(lexer.TokenKind.LeftParen, "Expected '(' after 'print' statement")
+            #     out = PrintStatement(self.parse_expression())
+            #     self.consume(lexer.TokenKind.RightParen, "Expected ')' after 'print' statement")
+            #     self.logger.debug(f"Returning {out}")
+            #     return out
             case lexer.TokenKind.Return:
                 self.logger.debug("Parsing return statement")
                 self.advance()
                 out = ReturnStatement(self.parse_expression())
+                self.logger.debug(f"Returning {out}")
+                return out
+        return self.parse_block_statements()
+
+    def parse_block_statements(self) -> Node:
+        match self.current_token.kind:
+            case lexer.TokenKind.If:
+                self.logger.debug("Parsing if statement")
+                self.advance()
+                if self.current_token.kind != lexer.TokenKind.Identifier and self.current_token.kind != lexer.TokenKind.LeftParen:
+                    raise SyntaxError("Expected identifier or '(' after 'if' statement")
+                condition = self.parse_expression()
+                self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'if' statement")
+                if_body = self.parse_block()
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'if' statement")
+                if self.current_token.kind == lexer.TokenKind.Elif:
+                    raise NotImplementedError("elif statements are not yet implemented")
+                if self.current_token.kind == lexer.TokenKind.Else:
+                    self.advance()
+                    self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after 'else' in 'if' statement")
+                    else_body = self.parse_block()
+                    self.consume(lexer.TokenKind.RightBrace, "Expected '}' after 'else' body in 'if' statement")
+                    out = IfStatement(condition, if_body, else_body)
+                else:
+                    out = IfStatement(condition, if_body)
+                self.logger.debug(f"Returning {out}")
+                return out
+            case lexer.TokenKind.While:
+                self.logger.debug("Parsing while statement")
+                self.advance()
+                if self.current_token.kind != lexer.TokenKind.Identifier and self.current_token.kind != lexer.TokenKind.LeftParen:
+                    raise SyntaxError("Expected identifier or '(' after 'while' statement")
+                condition = self.parse_expression()
+                self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'while' statement")
+                body = self.parse_block()
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'while' statement")
+                out = WhileStatement(condition, body)
                 self.logger.debug(f"Returning {out}")
                 return out
         return self.parse_expression()
@@ -101,9 +166,22 @@ class Parser:
 
     def parse_assignment(self) -> Node:
         left = self.parse_comparison()
-        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Equal:
-            self.advance()
-            left = nodes.Assignment(left, self.parse_assignment())
+        match self.current_token.kind:
+            case lexer.TokenKind.Equal:
+                self.advance()
+                left = nodes.Assignment(left, self.parse_assignment())
+            case lexer.TokenKind.PlusEqual:
+                self.advance()
+                left = nodes.Assignment(left, binaryoperations.Add(left, self.parse_assignment()))
+            case lexer.TokenKind.MinusEqual:
+                self.advance()
+                left = nodes.Assignment(left, binaryoperations.Subtract(left, self.parse_assignment()))
+            case lexer.TokenKind.MultiplyEqual:
+                self.advance()
+                left = nodes.Assignment(left, binaryoperations.Multiply(left, self.parse_assignment()))
+            case lexer.TokenKind.DivideEqual:
+                self.advance()
+                left = nodes.Assignment(left, binaryoperations.Divide(left, self.parse_assignment()))
         return left
 
     def parse_comparison(self) -> Node:
@@ -158,6 +236,12 @@ class Parser:
         if self.current_token is None:
             raise SyntaxError("Unexpected end of file")
         match self.current_token.kind:
+            case lexer.TokenKind.LeftParen:
+                self.advance()
+                out = self.parse_expression()
+                self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression")
+                self.logger.debug(f"Returning {out}")
+                return out
             case lexer.TokenKind.StringLiteral:
                 out = StringLiteral(self.current_token.value)
                 self.advance()
@@ -184,9 +268,20 @@ class Parser:
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.Identifier:
-                name = nodes.VariableReference(self.current_token.value)
+                name = self.current_token.value
                 self.advance()
-                self.logger.debug(f"Returning {name}")
-                return name
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    args = []
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        args.append(self.parse_expression())
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in function call")
+                    out = nodes.FunctionCall(name, args)
+                else:
+                    out = nodes.VariableReference(name)
+                self.logger.debug(f"Returning {out}")
+                return out
             case _:
                 raise SyntaxError(f"Unexpected token: {self.current_token} {self.current_token.position_end}:{self.current_token.position_end}")

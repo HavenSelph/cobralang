@@ -1,4 +1,4 @@
-from cobralang.interpreter.interpreter import Context, ReplContext
+from cobralang.interpreter.interpreter import Context
 from os.path import isfile, isdir, split, join
 from pathlib import Path
 import cobralang.parser as parser
@@ -72,14 +72,14 @@ if args.filepath is not None:
 else:
     from time import sleep
     log.info("No file specified, entering repl mode...")
-    context = ReplContext()
+    context = Context()
     while True:
         sleep(0.1)
         code = input(">>> ")
         if code == "exit()":
             break
         elif code == "clear()":
-            context = ReplContext()
+            context = Context()
             continue
         elif code == "":
             continue
