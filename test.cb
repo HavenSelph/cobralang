@@ -1,1 +1,15 @@
-print("Hello world!")
+import math
+print("importing file")
+import imported
+print(x)
+
+let user_input = input("Enter a number: ")
+print("You entered: ")
+print(user_input)
+print("The power of your number is: ")
+print(int(user_input)**2)
+
+while (True) {
+    print("Hello World")
+    return
+}

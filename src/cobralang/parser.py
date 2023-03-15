@@ -156,9 +156,12 @@ class Parser:
             case lexer.TokenKind.If:
                 self.logger.debug("Parsing if statement")
                 self.advance()
-                if self.current_token.kind != lexer.TokenKind.Identifier and self.current_token.kind != lexer.TokenKind.LeftParen:
-                    raise SyntaxError("Expected identifier or '(' after 'if' statement")
-                condition = self.parse_expression()
+                if self.current_token.kind is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    condition = self.parse_expression()
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after condition in 'if' statement")
+                else:
+                    condition = self.parse_expression()
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'if' statement")
                 if_body = self.parse_block()
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'if' statement")
@@ -177,9 +180,12 @@ class Parser:
             case lexer.TokenKind.While:
                 self.logger.debug("Parsing while statement")
                 self.advance()
-                if self.current_token.kind != lexer.TokenKind.Identifier and self.current_token.kind != lexer.TokenKind.LeftParen:
-                    raise SyntaxError("Expected identifier or '(' after 'while' statement")
-                condition = self.parse_expression()
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    condition = self.parse_expression()
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after condition in 'while' statement")
+                else:
+                    condition = self.parse_expression()
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'while' statement")
                 body = self.parse_block()
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'while' statement")

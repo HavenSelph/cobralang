@@ -74,7 +74,9 @@ class Program(Block):
         except ReturnException as e:
             out = e.value
         except StopException as e:
-            exit(e.code)
+            if e.code is not None:
+                print("Program exited with code ", e.code)
+            exit(0)
         return out
 
 
