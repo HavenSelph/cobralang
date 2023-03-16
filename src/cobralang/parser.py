@@ -351,29 +351,4 @@ class Parser:
                         out = nodes.VariableReference(name)
                 self.logger.debug(f"Returning {out}")
                 return out
-            case lexer.TokenKind.LeftParen:
-                self.advance()
-                out = self.parse_expression()
-                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
-                    self.logger.debug("Found tuple, parsing...")
-                    out = [out]
-                    while self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
-                        self.advance()
-                        out.append(self.parse_expression())
-                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression")
-                    return TupleNode(out)
-                self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression")
-                self.logger.debug(f"Returning {out}")
-                return out
-            case lexer.TokenKind.LeftBracket:
-                self.advance()
-                out = self.parse_expression()
-                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
-                    self.logger.debug("Found list, parsing...")
-                    out = [out]
-                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightBracket:
-                        self.advance()
-                        out.append(self.parse_expression())
-                    self.consume(lexer.TokenKind.RightBracket, "Expected ']' after expression")
-                    return ListNode(out)
         raise SyntaxError(f"Unexpected token: {self.current_token} {self.current_token.position_end}:{self.current_token.position_end}")

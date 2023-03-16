@@ -1,5 +1,5 @@
 let list = (10, 15)
-let otherList = [20, 25, 56]
+let otherList = ["String right here", 25, 56]
 print(list)
 print(otherList)
 ctx()
