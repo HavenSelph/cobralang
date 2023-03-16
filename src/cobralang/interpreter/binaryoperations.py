@@ -88,3 +88,8 @@ class FloorDivide(BinaryOp):
 class Modulo(BinaryOp):
     def __init__(self, left: Node, right: Node):
         super().__init__(left, right, "%", lambda a, b: a % b)
+
+
+class In(BinaryOp):
+    def __init__(self, left: Node, right: Node):
+        super().__init__(left, right, "in", lambda a, b: a in b)
