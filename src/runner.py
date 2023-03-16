@@ -60,16 +60,20 @@ if args.filepath is not None:
         code = file.read()
 
     filename = f"<{split(filepath)[1]}>"
-    tokens = lexer.Lexer(code, filename=filename, logger=log, logging_level=log.getEffectiveLevel()).tokenize()
-    log.info("File opened successfully, attempting to parse...")
-    program = parser.Parser(tokens, filename=filename, logger=log, logging_level=log.getEffectiveLevel()).parse()
-    log.info("File parsed successfully, attempting to run...")
 
-    output = program.run(Context())
-    print(output)
-    if output is not None:
-        print(output)
-    log.info("File run successfully, exiting...")
+    try:
+        tokens = lexer.Lexer(code, filename=filename, logger=log, logging_level=log.getEffectiveLevel()).tokenize()
+        log.info("File opened successfully, attempting to parse...")
+        program = parser.Parser(tokens, filename=filename, logger=log, logging_level=log.getEffectiveLevel()).parse()
+        log.info("File parsed successfully, attempting to run...")
+
+        output = program.run(Context())
+
+        if output is not None:
+            print(output)
+    except Exception as e:
+        log.exception(e)
+        raise e
 else:
     from time import sleep
     log.info("No file specified, entering repl mode...")
@@ -95,4 +99,5 @@ else:
                 print(output)
         except Exception as e:
             log.exception(e)
+            sleep(0.1)
             print(e)
