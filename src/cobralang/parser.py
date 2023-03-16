@@ -294,6 +294,12 @@ class Parser:
         if self.current_token is None:
             raise SyntaxError("Unexpected end of file")
         match self.current_token.kind:
+            case lexer.TokenKind.Plus:
+                self.advance()
+                return unaryoperations.Plus(self.parse_atom())
+            case lexer.TokenKind.Minus:
+                self.advance()
+                return unaryoperations.Minus(self.parse_atom())
             case lexer.TokenKind.StringLiteral:
                 out = StringLiteral(self.current_token.value)
                 self.advance()

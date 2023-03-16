@@ -1,6 +1,6 @@
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import NullLiteral, Value
+from .datatypes import Null, Value
 
 
 class VariableReference(Node):
@@ -74,14 +74,9 @@ class Block(Node):
 
     def run(self, ctx: Context):
         ctx.push_scope()
-        out = NullLiteral()
-        try:
-            for statement in self.statements:
-                out = statement.run(ctx)
-        except ReturnException as e:
-            out = e.value
+        for statement in self.statements:
+            out = statement.run(ctx)
         ctx.pop_scope()
-        return out
 
 
 class Program(Block):
@@ -92,7 +87,7 @@ class Program(Block):
         return f"Program({self.statements})"
 
     def run(self, ctx: Context):
-        out = NullLiteral()
+        out = Null()
         try:
             for statement in self.statements:
                 out = statement.run(ctx)
@@ -102,7 +97,8 @@ class Program(Block):
             if e.code is not None:
                 print("Program exited with code ", e.code)
             exit(0)
-        return out
+        if not isinstance(out, Null):
+            return out
 
 
 class Function:

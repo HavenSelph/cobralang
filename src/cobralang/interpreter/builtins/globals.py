@@ -118,5 +118,7 @@ std_functions = {
     "int": AsIntFunction(),
     "float": AsFloatFunction(),
     "str": AsStringFunction(),
-    "bool": AsBoolFunction()
+    "bool": AsBoolFunction(),
+    "list": AsListFunction(),
+    "tuple": AsTupleFunction()
 }

@@ -75,7 +75,7 @@ class TupleLiteral(Node):
         return f'({", ".join([str(i) for i in self.elements])})'
 
     def run(self, ctx: Context):
-        return Tuple([i.run(ctx) for i in self.elements])
+        return Tuple(tuple([i.run(ctx) for i in self.elements]))
 
 
 class Value:
@@ -222,6 +222,12 @@ class Integer(Value):
     def __mod__(self, other):
         return Integer(self.value % other.value)
 
+    def __pos__(self):
+        return Integer(self.value)
+
+    def __neg__(self):
+        return Integer(-self.value)
+
 
 class Float(Value):
     def __init__(self, value: float):
@@ -279,6 +285,12 @@ class Float(Value):
 
     def __mod__(self, other):
         return Float(self.value % other.value)
+
+    def __pos__(self):
+        return Float(self.value)
+
+    def __neg__(self):
+        return Float(-self.value)
 
 
 class String(Value):

@@ -67,7 +67,8 @@ if args.filepath is not None:
 
     output = program.run(Context())
     print(output)
-
+    if output is not None:
+        print(output)
     log.info("File run successfully, exiting...")
 else:
     from time import sleep
@@ -83,7 +84,6 @@ else:
             continue
         elif code == "":
             continue
-
         try:
             tokens = lexer.Lexer(code, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).tokenize()
             program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
@@ -91,7 +91,8 @@ else:
             log.debug("Running program...")
             output = program.run(context)
             log.debug("Program ran successfully")
-            print(output)
+            if output is not None:
+                print(output)
         except Exception as e:
             log.exception(e)
             print(e)
