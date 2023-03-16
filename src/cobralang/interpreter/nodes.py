@@ -14,6 +14,18 @@ class VariableReference(Node):
         return ctx[self.name]
 
 
+class VariableIndex(Node):
+    def __init__(self, name: str, index: Node):
+        self.name = name
+        self.index = index
+
+    def __repr__(self):
+        return f"{self.name}[{self.index}]"
+
+    def run(self, ctx: Context):
+        return ctx[self.name][self.index.run(ctx)]
+
+
 class VariableDeclaration(Node):
     def __init__(self, name: str, value: Node):
         self.name = name
@@ -38,6 +50,19 @@ class Assignment(Node):
         if not isinstance(self.left, VariableReference):
             raise TypeError("Can only assign to a variable")
         ctx[self.left.name] = self.right.run(ctx)
+
+
+class IndexAssignment(Node):
+    def __init__(self, left: str, index: Node, right: Node):
+        self.left = left
+        self.index = index
+        self.right = right
+
+    def __repr__(self):
+        return f"{self.left}[{self.index}] = {self.right}"
+
+    def run(self, ctx: Context):
+        ctx[self.left][self.index.run(ctx)] = self.right.run(ctx)
 
 
 class Block(Node):

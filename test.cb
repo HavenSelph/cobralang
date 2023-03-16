@@ -1,15 +1,8 @@
-import math
-print("importing file")
-import imported
-print(x)
-
-let user_input = input("Enter a number: ")
-print("You entered: ")
-print(user_input)
-print("The power of your number is: ")
-print(int(user_input)**2)
-
-while (True) {
-    print("Hello World")
-    return
-}
+let list = (10, 15)
+let otherList = [20, 25, 56]
+print(list)
+print(otherList)
+ctx()
+print(list[0])
+print(otherList[0])
+print(otherList[1])
