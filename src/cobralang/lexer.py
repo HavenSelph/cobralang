@@ -83,6 +83,7 @@ class TokenKind(Enum):
     LessEqual = auto()
     And = auto()
     Or = auto()
+    In = auto()
 
     # Delimiters
     LeftParen = auto()
@@ -100,6 +101,7 @@ class TokenKind(Enum):
     Return = auto()
     Let = auto()
     Fn = auto()
+    For = auto()
 
     # Blocks
     If = auto()
@@ -120,6 +122,7 @@ keywords = {
     "not": TokenKind.Not,
     "and": TokenKind.And,
     "or": TokenKind.Or,
+    "in": TokenKind.In,
 
     # statements
     "import": TokenKind.Import,
@@ -132,6 +135,7 @@ keywords = {
     "elif": TokenKind.Elif,
     "else": TokenKind.Else,
     "while": TokenKind.While,
+    "for": TokenKind.For,
 }
 
 single_character_tokens = {
