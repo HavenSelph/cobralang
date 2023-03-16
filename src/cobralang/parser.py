@@ -258,12 +258,6 @@ class Parser:
                 case lexer.TokenKind.GreaterEqual:
                     self.advance()
                     left = binaryoperations.GreaterThanOrEqual(left, self.parse_comparison())
-                case lexer.TokenKind.And:
-                    self.advance()
-                    left = binaryoperations.And(left, self.parse_comparison())
-                case lexer.TokenKind.Or:
-                    self.advance()
-                    left = binaryoperations.Or(left, self.parse_comparison())
         return left
 
     def parse_additive(self) -> Node:
@@ -361,6 +355,11 @@ class Parser:
                     left = nodes.VariableReference(name)
                     right = self.parse_comparison()
                     out = binaryoperations.And(left, right)
+                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.In:
+                    self.advance()
+                    left = nodes.VariableReference(name)
+                    right = self.parse_comparison()
+                    out = binaryoperations.In(left, right)
                 else:
                     if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftBracket:
                         self.logger.debug("Found index, parsing...")
