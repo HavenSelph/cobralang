@@ -203,22 +203,28 @@ class Parser:
             match self.current_token.kind:
                 case lexer.TokenKind.Equal:
                     self.advance()
-                    left = nodes.Assignment(left, self.parse_assignment())
+                    right = self.parse_assignment()
                 case lexer.TokenKind.PlusEqual:
                     self.advance()
-                    left = nodes.Assignment(left, binaryoperations.Add(left, self.parse_assignment()))
+                    right = binaryoperations.Add(left, self.parse_assignment())
                 case lexer.TokenKind.MinusEqual:
                     self.advance()
-                    left = nodes.Assignment(left, binaryoperations.Subtract(left, self.parse_assignment()))
+                    right = binaryoperations.Subtract(left, self.parse_assignment())
                 case lexer.TokenKind.MultiplyEqual:
                     self.advance()
-                    left = nodes.Assignment(left, binaryoperations.Multiply(left, self.parse_assignment()))
+                    right = binaryoperations.Multiply(left, self.parse_assignment())
                 case lexer.TokenKind.DivideEqual:
                     self.advance()
-                    left = nodes.Assignment(left, binaryoperations.Divide(left, self.parse_assignment()))
+                    right = binaryoperations.Divide(left, self.parse_assignment())
                 case lexer.TokenKind.ModEqual:
                     self.advance()
-                    left = nodes.Assignment(left, binaryoperations.Modulo(left, self.parse_assignment()))
+                    right = binaryoperations.Modulo(left, self.parse_assignment())
+                case _:
+                    raise NotImplementedError(f"Assignment operator {self.current_token.kind} is not yet implemented")
+            if isinstance(left, nodes.VariableIndex):
+                left = nodes.IndexAssignment(left.name, left.index, right)
+            elif isinstance(left, nodes.VariableReference):
+                left = nodes.Assignment(left, right)
         return left
 
     def parse_comparison(self) -> Node:
@@ -349,6 +355,31 @@ class Parser:
                         out = nodes.VariableIndex(name, index)
                     else:
                         out = nodes.VariableReference(name)
+                self.logger.debug(f"Returning {out}")
+                return out
+            case lexer.TokenKind.LeftParen:
+                self.advance()
+                out = self.parse_expression()
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                    self.advance()
+                    elements = [out]
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        elements.append(self.parse_expression())
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                    out = TupleLiteral(elements)
+                self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression")
+                self.logger.debug(f"Returning {out}")
+                return out
+            case lexer.TokenKind.LeftBracket:
+                self.advance()
+                elements = []
+                while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightBracket:
+                    elements.append(self.parse_expression())
+                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                        self.advance()
+                self.consume(lexer.TokenKind.RightBracket, "Expected ']' after list")
+                out = ListLiteral(elements)
                 self.logger.debug(f"Returning {out}")
                 return out
         raise SyntaxError(f"Unexpected token: {self.current_token} {self.current_token.position_end}:{self.current_token.position_end}")

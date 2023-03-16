@@ -56,7 +56,7 @@ class NullLiteral(Node):
         return None
 
 
-class ListNode(Node):
+class ListLiteral(Node):
     def __init__(self, elements: list):
         self.elements = elements
 
@@ -67,7 +67,7 @@ class ListNode(Node):
         return List([i.run(ctx) for i in self.elements])
 
 
-class TupleNode(Node):
+class TupleLiteral(Node):
     def __init__(self, elements: list):
         self.elements = elements
 
