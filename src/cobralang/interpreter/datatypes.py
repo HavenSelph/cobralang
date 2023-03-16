@@ -121,15 +121,42 @@ class List(Value):
         return Boolean(self.value != other.value)
 
 
-class Tuple(List):
+class Tuple(Value):
+    def __init__(self, value: tuple):
+        super().__init__(value)
+
     def __repr__(self):
         return f'({", ".join([str(i) for i in self.value])})'
 
-    def __add__(self, other):
+    def __str__(self):
+        return self.__repr__()
+
+    def __bool__(self):
+        return len(self.value) != 0
+
+    def __add__(self, other: Value):
+        return Tuple(self.value + other.value)
+
+    def __getitem__(self, item: Value):
+        return self.value[item.value]
+
+    def __setitem__(self, key: Value, value: Value):
         raise TypeError('Tuples are immutable')
 
-    def __setitem__(self, key, value):
-        raise TypeError('Tuples are immutable')
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def __contains__(self, item: Node):
+        return item in self.value
+
+    def __eq__(self, other):
+        return Boolean(self.value == other.value)
+
+    def __ne__(self, other):
+        return Boolean(self.value != other.value)
 
 
 class Dict(Value):

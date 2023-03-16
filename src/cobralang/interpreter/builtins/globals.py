@@ -93,6 +93,22 @@ class AsBoolFunction(Function):
         return Boolean(bool(args[0].value))
 
 
+class AsListFunction(Function):
+    def __init__(self):
+        super().__init__("list", ["value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return List(list(args[0].value))
+
+
+class AsTupleFunction(Function):
+    def __init__(self):
+        super().__init__("tuple", ["value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return Tuple(tuple(args[0].value))
+
+
 std_functions = {
     "print": PrintFunction(),
     "ctx": DumpContext(),
