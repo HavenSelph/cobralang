@@ -42,7 +42,47 @@ class DumpContext(Function):
             print(" "*space_count+"Variables: [\n"+"".join([f"{' '*space_count}\t{name}={value}\n" for name, value in scope.variables.items()])+" "*space_count+"]")
             print(" "*space_count+"Functions: [\n"+"".join([f"{' '*space_count}\t{name}={value}\n" for name, value in scope.functions.items()])+" "*space_count+"]")
             space_count += 2
-        return None
+        return GetVariables().run(ctx, []), GetFunctions().run(ctx, [])
+
+
+class GetVariables(Function):
+    def __init__(self):
+        super().__init__("getctx", [], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        variables = {}
+        for scope in ctx.scopes[::-1]:
+            variables.update(scope.variables)
+        # TODO: make return dict
+        return Tuple(tuple([key for key in variables.keys()]))
+
+
+class GetFunctions(Function):
+    def __init__(self):
+        super().__init__("getfuncs", [], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        functions = {}
+        for scope in ctx.scopes[::-1]:
+            functions.update(scope.functions)
+        # TODO: make return dict
+        return Tuple(tuple([key for key in functions.keys()]))
+
+
+class GetFunction(Function):
+    def __init__(self):
+        super().__init__("get", ["name"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return ctx.get_function(args[0])
+
+
+class GetVariable(Function):
+    def __init__(self):
+        super().__init__("getvar", ["name"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return ctx[args[0]]
 
 
 class ExitFunction(Function):
@@ -109,16 +149,39 @@ class AsTupleFunction(Function):
         return Tuple(tuple(args[0].value))
 
 
+class InsertFunction(Function):
+    def __init__(self):
+        super().__init__("insert", ["list", "index", "value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        args[0].value.insert(args[1].value, args[2])
+        return None
+
+
+class AppendFunction(Function):
+    def __init__(self):
+        super().__init__("append", ["list", "value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        args[0].value.append(args[1])
+        return None
+
+
 std_functions = {
     "print": PrintFunction(),
-    "ctx": DumpContext(),
     "exit": ExitFunction(),
+    "ctx": DumpContext(),
+    "getvars": GetVariables(),
+    "getfuncs": GetFunctions(),
+    "get": GetFunction(),
     "input": InputFunction(),
+    "insert": InsertFunction(),
+    "append": AppendFunction(),
     "type": TypeFunction(),
     "int": AsIntFunction(),
     "float": AsFloatFunction(),
     "str": AsStringFunction(),
     "bool": AsBoolFunction(),
     "list": AsListFunction(),
-    "tuple": AsTupleFunction()
+    "tuple": AsTupleFunction(),
 }

@@ -1,9 +1,2 @@
-let list = (10, 15)
-let otherList = ["String right here", 25, +56]
-print(list[0])
-list = list(list)
-print(otherList[-1])
-print(list)
-let x = False
-let y = False
-print(x or y)
+let functions = getfuncs()
+print(functions)
