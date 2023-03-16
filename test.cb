@@ -1,6 +1,9 @@
-print("Hello World")
-let x = 10
-while x > 0 {
-print(x)
-x -= 1
+let elems = (1, 2, 3)
+let i = 0
+while i < 3 {
+print(elems[i]); i++
+}
+
+fn add(a, b) {
+    a + b
 }

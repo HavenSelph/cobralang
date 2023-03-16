@@ -142,7 +142,6 @@ single_character_tokens = {
     "}": TokenKind.RightBrace,
     "[": TokenKind.LeftBracket,
     "]": TokenKind.RightBracket,
-    ";": TokenKind.Semicolon,
     ":": TokenKind.Colon,
     ",": TokenKind.Comma,
     "|": TokenKind.Or,
@@ -251,7 +250,7 @@ class Lexer:
 
         while self.current_char is not None:
             match self.current_char:
-                case "\n":
+                case "\n" | ";":
                     self.logger.debug(f"Found newline, updating {tokens[-1]}.newline_after to True")
                     tokens[-1].newline_after = True
                     self.advance()

@@ -42,6 +42,13 @@ class DumpContext(Function):
             print(" "*space_count+"Variables: [\n"+"".join([f"{' '*space_count}\t{name}={value}\n" for name, value in scope.variables.items()])+" "*space_count+"]")
             print(" "*space_count+"Functions: [\n"+"".join([f"{' '*space_count}\t{name}={value}\n" for name, value in scope.functions.items()])+" "*space_count+"]")
             space_count += 2
+
+
+class GetContext(Function):
+    def __init__(self):
+        super().__init__("getctx", [], EmptyBlock())
+
+    def run(self, ctx: Context, args):
         return GetVariables().run(ctx, []), GetFunctions().run(ctx, [])
 
 
@@ -74,7 +81,7 @@ class GetFunction(Function):
         super().__init__("get", ["name"], EmptyBlock())
 
     def run(self, ctx: Context, args):
-        return ctx.get_function(args[0])
+        return ctx.get_function(args[0].value)
 
 
 class GetVariable(Function):
@@ -82,7 +89,7 @@ class GetVariable(Function):
         super().__init__("getvar", ["name"], EmptyBlock())
 
     def run(self, ctx: Context, args):
-        return ctx[args[0]]
+        return ctx[args[0].value]
 
 
 class SetVariable(Function):
@@ -90,7 +97,16 @@ class SetVariable(Function):
         super().__init__("setvar", ["name", "value"], EmptyBlock())
 
     def run(self, ctx: Context, args):
-        ctx[args[0]] = args[1]
+        ctx.current_scope().variables[args[0].value] = args[1]
+        return None
+
+
+class SetGlobal(Function):
+    def __init__(self):
+        super().__init__("setglobal", ["name", "value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        ctx.scopes[0].variables[args[0].value] = args[1]
         return None
 
 
@@ -179,11 +195,14 @@ class AppendFunction(Function):
 std_functions = {
     "print": PrintFunction(),
     "exit": ExitFunction(),
-    "ctx": DumpContext(),
+    "dump": DumpContext(),
+    "getctx": GetContext(),
     "getvars": GetVariables(),
+    "getvar": GetVariable(),
     "getfuncs": GetFunctions(),
+    "getfunc": GetFunction(),
     "setvar": SetVariable(),
-    "get": GetFunction(),
+    "global": SetGlobal(),
     "input": InputFunction(),
     "insert": InsertFunction(),
     "append": AppendFunction(),
