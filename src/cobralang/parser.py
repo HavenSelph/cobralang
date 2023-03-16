@@ -68,6 +68,9 @@ class Parser:
             if self.current_token is not None and not self.tokens[self.index-1].newline_after and (self.next_token is not None and self.next_token.kind != lexer.TokenKind.RightBrace):
                 raise SyntaxError(f"Expected newline after {block[-1]}")
             self.logger.debug(f"Pushed {block[-1]} to block")
+        if self.logger.getEffectiveLevel() >= logging.DEBUG:
+            program = "\n".join([repr(node) for node in block])
+            self.logger.debug(f"Returning program:\nSTART OF {self.filename}\n{program}\nEND OF {self.filename}")
         return nodes.Program(block)
 
     def parse_block(self) -> Node | Block:
@@ -199,8 +202,14 @@ class Parser:
 
     def parse_assignment(self) -> Node:
         left = self.parse_comparison()
-        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.PlusEqual, lexer.TokenKind.MinusEqual, lexer.TokenKind.MultiplyEqual, lexer.TokenKind.DivideEqual):
+        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.PlusEqual, lexer.TokenKind.MinusEqual, lexer.TokenKind.MultiplyEqual, lexer.TokenKind.DivideEqual, lexer.TokenKind.PlusPlus, lexer.TokenKind.MinusMinus):
             match self.current_token.kind:
+                case lexer.TokenKind.PlusPlus:
+                    self.advance()
+                    right = binaryoperations.Add(left, IntegerLiteral(1))
+                case lexer.TokenKind.MinusMinus:
+                    self.advance()
+                    right = binaryoperations.Subtract(left, IntegerLiteral(1))
                 case lexer.TokenKind.Equal:
                     self.advance()
                     right = self.parse_assignment()
@@ -219,7 +228,7 @@ class Parser:
                 case lexer.TokenKind.ModEqual:
                     self.advance()
                     right = binaryoperations.Modulo(left, self.parse_assignment())
-                case _:
+                case _:  # Should never run, but needed so type checker doesn't complain
                     raise NotImplementedError(f"Assignment operator {self.current_token.kind} is not yet implemented")
             if isinstance(left, nodes.VariableIndex):
                 left = nodes.IndexAssignment(left.name, left.index, right)

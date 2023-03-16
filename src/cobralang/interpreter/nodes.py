@@ -87,7 +87,7 @@ class Program(Block):
         return f"Program({self.statements})"
 
     def run(self, ctx: Context):
-        out = Null()
+        out = None
         try:
             for statement in self.statements:
                 out = statement.run(ctx)
@@ -97,7 +97,7 @@ class Program(Block):
             if e.code is not None:
                 print("Program exited with code ", e.code)
             exit(0)
-        if not isinstance(out, Null):
+        if out is not None:
             return out
 
 

@@ -58,7 +58,9 @@ class TokenKind(Enum):
 
     # Operators
     Plus = auto()
+    PlusPlus = auto()
     Minus = auto()
+    MinusMinus = auto()
     Multiply = auto()
     Power = auto()
     Divide = auto()
@@ -133,11 +135,6 @@ keywords = {
 }
 
 single_character_tokens = {
-    "+": TokenKind.Plus,
-    "-": TokenKind.Minus,
-    "*": TokenKind.Multiply,
-    "/": TokenKind.Divide,
-    "%": TokenKind.Mod,
     "=": TokenKind.Equal,
     "(": TokenKind.LeftParen,
     ")": TokenKind.RightParen,
@@ -310,6 +307,13 @@ class Lexer:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.PlusEqual if char == "+" else TokenKind.MinusEqual,
+                            position_end=self.position, position_start=self.position
+                        ))
+                        self.advance()
+                    elif self.current_char == char:
+                        self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
+                        tokens.append(Token(
+                            TokenKind.PlusPlus if char == "+" else TokenKind.MinusMinus,
                             position_end=self.position, position_start=self.position
                         ))
                         self.advance()

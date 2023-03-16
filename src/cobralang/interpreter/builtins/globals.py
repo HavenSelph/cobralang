@@ -85,6 +85,15 @@ class GetVariable(Function):
         return ctx[args[0]]
 
 
+class SetVariable(Function):
+    def __init__(self):
+        super().__init__("setvar", ["name", "value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        ctx[args[0]] = args[1]
+        return None
+
+
 class ExitFunction(Function):
     def __init__(self):
         super().__init__("exit", ["code"], EmptyBlock())
@@ -173,6 +182,7 @@ std_functions = {
     "ctx": DumpContext(),
     "getvars": GetVariables(),
     "getfuncs": GetFunctions(),
+    "setvar": SetVariable(),
     "get": GetFunction(),
     "input": InputFunction(),
     "insert": InsertFunction(),
