@@ -192,6 +192,14 @@ class AppendFunction(Function):
         return None
 
 
+class LenFunction(Function):
+    def __init__(self):
+        super().__init__("len", ["value"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return Integer(len(args[0].value))
+
+
 std_functions = {
     "print": PrintFunction(),
     "exit": ExitFunction(),
@@ -213,4 +221,5 @@ std_functions = {
     "bool": AsBoolFunction(),
     "list": AsListFunction(),
     "tuple": AsTupleFunction(),
+    "len": LenFunction(),
 }
