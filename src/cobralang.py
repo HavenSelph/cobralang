@@ -106,7 +106,11 @@ else:
             program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
             sleep(0.1)
             log.debug("Running program...")
-            output = program.run(context)
+            try:
+                output = program.run(context)
+            except KeyboardInterrupt as e:
+                print("KeyboardInterrupt")
+                continue
             log.debug("Program ran successfully")
             if output is not None:
                 print(output)

@@ -1,6 +1,2 @@
 import utils
-let x = split(" ", "Hello World!")
-print(x[0])
-print(x[1])
-print(join(" ", x))
-input("Press enter to continue...")
+
