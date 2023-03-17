@@ -21,7 +21,7 @@ argparser = ArgumentParser(
     description="A simple interpreter for the CobraLang programming language.",
 )
 
-argparser.add_argument('--filepath', help="The path to the file to be interpreted.", type=str, default=None)
+argparser.add_argument('filepath', help="The path to the file to be interpreted.", type=str)
 argparser.add_argument('--logging_level', default="NONE", help="The logging level to use. Defaults to 51 (no logs).", choices=log_levels.keys(), type=str)
 argparser.add_argument('--logging_path', default=None, help="The path to the log file. Defaults to the current directory.", type=str)
 args = argparser.parse_args()
@@ -48,7 +48,7 @@ if log.getEffectiveLevel() <= 10:
 log.info("CobraLang runner started successfully")
 log.debug(f"{args!r}")
 
-if args.filepath is not None:
+if args.filepath != "repl":
     log.info("File specified, attempting to open...")
     filepath = Path(args.filepath).absolute()
 
@@ -79,9 +79,9 @@ else:
         return sum([1 for token in token_list if token.kind == token_type])
 
     from time import sleep
-    log.info("No file specified, entering repl mode...")
+    log.info("Entering repl mode...")
     context = Context()
-    print("CobraLang (v0.0.1) repl mode. Type 'exit()' to exit, 'clear()' to clear the context. (clear() does not clear the console, only the repl context.)")
+    print("CobraLang (v0.0.1) repl mode. Type 'exit()' to exit, 'clear()' to clear the context.")
     while True:
         try:
             sleep(0.1)
