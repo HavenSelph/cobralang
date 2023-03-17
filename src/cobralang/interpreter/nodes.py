@@ -31,6 +31,14 @@ class Subscript(Node):
         elif isinstance(self.name, VariableReference):
             return ctx[self.name.name][self.index.run(ctx)]
 
+    def get_target(self, ctx: Context):
+        if isinstance(self.name, Value):
+            return self.name.value
+        elif isinstance(self.name, Subscript):
+            return self.name.run(ctx)
+        elif isinstance(self.name, VariableReference):
+            return ctx[self.name.name]
+
 
 class VariableDeclaration(Node):
     def __init__(self, name: str, value: Node):
@@ -56,7 +64,8 @@ class Assignment(Node):
         if isinstance(self.left, VariableReference):
             ctx[self.left.name] = self.right.run(ctx)
         elif isinstance(self.left, Subscript):
-            pass
+            target = self.left.get_target(ctx)
+            target[self.left.index.run(ctx)] = self.right.run(ctx)
         else:
             raise Exception(f"Invalid assignment target: {self}")
 
