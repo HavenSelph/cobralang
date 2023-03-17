@@ -413,3 +413,4 @@ class Lexer:
             tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"
             self.logger.debug(f"Tokens: {tmp}")
         return tokens[1:]
+

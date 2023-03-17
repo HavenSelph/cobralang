@@ -1,8 +1,0 @@
-let powers = []
-let i = 0
-while (i < 10) {
-    append(powers, 2**i)
-    i++
-}
-print(powers)
-print(str(powers))
