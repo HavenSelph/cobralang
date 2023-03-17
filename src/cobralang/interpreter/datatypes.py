@@ -306,6 +306,12 @@ class String(Value):
     def __bool__(self):
         return self.value!=""
 
+    def __len__(self):
+        return len(self.value)
+
+    def __getitem__(self, item: Value):
+        return self.value[item.value]
+
     # rt
 
     def __add__(self, other):
