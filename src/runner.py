@@ -75,20 +75,33 @@ if args.filepath is not None:
         log.exception(e)
         raise e
 else:
+    def count_token(token_type: lexer.TokenKind, token_list: list[lexer.Token]) -> int:
+        return sum([1 for token in token_list if token.kind == token_type])
+
     from time import sleep
     log.info("No file specified, entering repl mode...")
     context = Context()
+    print("CobraLang (v0.0.1) repl mode. Type 'exit()' to exit, 'clear()' to clear the context. (clear() does not clear the console, only the repl context.)")
     while True:
-        sleep(0.1)
-        code = input(">>> ")
-        if code == "exit()":
-            break
-        elif code == "clear()":
-            context = Context()
-            continue
-        elif code == "":
-            continue
         try:
+            sleep(0.1)
+            code = input(">>> ")
+            tmp = lexer.Lexer(code).tokenize()
+            while (count_token(lexer.TokenKind.LeftParen, tmp) > count_token(lexer.TokenKind.RightParen, tmp))\
+                    or (count_token(lexer.TokenKind.LeftBracket, tmp) > count_token(lexer.TokenKind.RightBracket, tmp))\
+                    or (count_token(lexer.TokenKind.LeftBrace, tmp) > count_token(lexer.TokenKind.RightBrace, tmp)):
+                new = input("... ")
+                code += new
+                if new == "":
+                    break
+                tmp = lexer.Lexer(code).tokenize()
+            if code == "exit()":
+                break
+            elif code == "clear()":
+                context = Context()
+                continue
+            elif code == "":
+                continue
             tokens = lexer.Lexer(code, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).tokenize()
             program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
             sleep(0.1)
