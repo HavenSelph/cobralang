@@ -1,9 +1,8 @@
-let elems = (1, 2, 3)
+let powers = []
 let i = 0
-while i < 3 {
-print(elems[i]); i++
+while (i < 10) {
+    append(powers, 2**i)
+    i++
 }
-
-fn add(a, b) {
-    a + b
-}
+print(powers)
+print(str(powers))
