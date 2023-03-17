@@ -53,7 +53,7 @@ class NullLiteral(Node):
         return 'null'
 
     def run(self, ctx: Context):
-        return None
+        return Null()
 
 
 class ListLiteral(Node):
@@ -76,6 +76,18 @@ class TupleLiteral(Node):
 
     def run(self, ctx: Context):
         return Tuple(tuple([i.run(ctx) for i in self.elements]))
+
+
+class SliceLiteral(Node):
+    def __init__(self, start: Node, end: Node):
+        self.start = start
+        self.end = end
+
+    def __repr__(self):
+        return f'{self.start}:{self.end}'
+
+    def run(self, ctx: Context):
+        return Slice(self.start.run(ctx), self.end.run(ctx))
 
 
 class Value:
@@ -239,10 +251,9 @@ class Float(Value):
     def __str__(self):
         return self.__repr__()
 
+    # rt
     def __bool__(self):
         return self.value != 0.0
-
-    # rt
 
     def __add__(self, other):
         return Float(self.value + other.value)
@@ -310,7 +321,7 @@ class String(Value):
         return len(self.value)
 
     def __getitem__(self, item: Value):
-        return self.value[item.value]
+        return String(self.value[item.value])
 
     # rt
 
@@ -355,7 +366,7 @@ class Null(Value):
         super().__init__(value=None)
 
     def __repr__(self):
-        return 'null'
+        return 'Null'
 
     # rt
     def __bool__(self):
@@ -364,3 +375,13 @@ class Null(Value):
     def __eq__(self, other):
         return Boolean(self.value == other.value)
 
+
+class Slice(Value):
+    def __init__(self, start: Value, stop: Value):
+        super().__init__(value=slice(start.value, stop.value))
+
+    def __repr__(self):
+        return f'{self.value[0]}:{self.value[1]}'
+
+    def __str__(self):
+        return self.__repr__()
