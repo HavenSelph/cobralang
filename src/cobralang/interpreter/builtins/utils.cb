@@ -1,6 +1,9 @@
 fn join(val, list) {
-    let i = 0
-    let str = ""
+    if (len(list) == 0) {
+        return ""
+    }
+    let i = 1
+    let str = list[0]
     while (i < len(list)) {
         str += val + list[i]
         i += 1
@@ -20,5 +23,45 @@ fn split(val, str) {
         i += 1
     }
     append(list, str[start:len(str)])
+    return list
+}
+
+fn sort(list) {
+    let i = 0
+    while (i < len(list)) {
+        let j = i + 1
+        while (j < len(list)) {
+            if (list[i] > list[j]) {
+                let temp = list[i]
+                list[i] = list[j]
+                list[j] = temp
+            }
+            j += 1
+        }
+        i += 1
+    }
+    return list
+}
+
+fn sum(list) {
+    let i = 0
+    let total = 0
+    while (i < len(list)) {
+        total += list[i]
+        i += 1
+    }
+    return total
+}
+
+fn reverse(list) {
+    let i = 0
+    let j = len(list) - 1
+    while (i < j) {
+        let temp = list[i]
+        list[i] = list[j]
+        list[j] = temp
+        i += 1
+        j -= 1
+    }
     return list
 }
