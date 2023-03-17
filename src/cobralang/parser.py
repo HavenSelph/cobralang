@@ -1,5 +1,4 @@
 from . import lexer
-from .interpreter.interpreter import Node
 from .interpreter.datatypes import *
 from .interpreter.statements import *
 from .interpreter import nodes, binaryoperations, unaryoperations
@@ -108,7 +107,7 @@ class Parser:
                         self.advance()
                 self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in 'fn' statement")
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after arguments in 'fn' statement")
-                body = self.parse_block()
+                body = nodes.FunctionBlock(self.parse_block().statements)
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after function body in 'fn' statement")
                 out = nodes.FunctionDefinition(nodes.Function(name, args, body))
                 self.logger.debug(f"Returning {out}")
@@ -121,7 +120,6 @@ class Parser:
                     name += ".cb"
                 self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
                 self.logger.debug(f"Attempting to locate file {name}")
-                from os import path
                 from pathlib import Path
                 path = Path("./" + name).absolute()
                 if not path.exists():
@@ -132,7 +130,7 @@ class Parser:
                     code = f.read()
                 _lexer = lexer.Lexer(code, filename=f"<name>", logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file)
                 # insert tokens into token list
-                tmp = "[\n" + "\n".join([repr(token) for token in self.tokens]) + "\n]"
+                # tmp = "[\n" + "\n".join([repr(token) for token in self.tokens]) + "\n]"
                 tokens = _lexer.tokenize()
                 self.tokens = self.tokens[:self.index] + tokens + self.tokens[self.index:]
                 self.advance(0)
@@ -198,7 +196,22 @@ class Parser:
         return self.parse_expression()
 
     def parse_expression(self) -> Node:
-        return self.parse_assignment()
+        left = self.parse_assignment()
+        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Or:
+            self.advance()
+            right = self.parse_comparison()
+            out = binaryoperations.Or(right, left)
+        elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.And:
+            self.advance()
+            right = self.parse_comparison()
+            out = binaryoperations.And(right, left)
+        elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.In:
+            self.advance()
+            right = self.parse_comparison()
+            out = binaryoperations.In(right, left)
+        else:
+            out = left
+        return out
 
     def parse_assignment(self) -> Node:
         left = self.parse_comparison()
@@ -230,10 +243,7 @@ class Parser:
                     right = binaryoperations.Modulo(left, self.parse_assignment())
                 case _:  # Should never run, but needed so type checker doesn't complain
                     raise NotImplementedError(f"Assignment operator {self.current_token.kind} is not yet implemented")
-            if isinstance(left, nodes.VariableIndex):
-                left = nodes.IndexAssignment(left.name, left.index, right)
-            elif isinstance(left, nodes.VariableReference):
-                left = nodes.Assignment(left, right)
+            left = nodes.Assignment(left, right)
         return left
 
     def parse_comparison(self) -> Node:
@@ -273,7 +283,7 @@ class Parser:
         return left
 
     def parse_multiplicative(self) -> Node:
-        left = self.parse_atom()
+        left = self.parse_atom_subscript()
         while self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Multiply, lexer.TokenKind.Power, lexer.TokenKind.Divide, lexer.TokenKind.FloorDivide, lexer.TokenKind.Mod):
             match self.current_token.kind:
                 case lexer.TokenKind.Multiply:
@@ -291,6 +301,25 @@ class Parser:
                 case lexer.TokenKind.Mod:
                     self.advance()
                     left = binaryoperations.Modulo(left, self.parse_multiplicative())
+        return left
+
+    def parse_atom_subscript(self) -> Node:
+        left = self.parse_atom()
+        while self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftBracket:
+            self.advance()
+            start, stop = NullLiteral(), NullLiteral()
+            if self.current_token is not None and self.current_token.kind != lexer.TokenKind.Colon:
+                start = self.parse_expression()
+                stop = start
+            if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Colon:
+                self.advance()
+                if self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightBracket:
+                    stop = self.parse_expression()
+            if start == stop:
+                left = nodes.Subscript(left, start)
+            else:
+                left = nodes.Subscript(left, SliceLiteral(start, stop))
+            self.consume(lexer.TokenKind.RightBracket, "Expected ']' after subscript")
         return left
 
     def parse_atom(self):
@@ -345,37 +374,8 @@ class Parser:
                             self.advance()
                     self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in function call")
                     out = nodes.FunctionCall(name, args)
-                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.Or:
-                    self.advance()
-                    left = nodes.VariableReference(name)
-                    right = self.parse_comparison()
-                    out = binaryoperations.Or(left, right)
-                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.And:
-                    self.advance()
-                    left = nodes.VariableReference(name)
-                    right = self.parse_comparison()
-                    out = binaryoperations.And(left, right)
-                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.In:
-                    self.advance()
-                    left = nodes.VariableReference(name)
-                    right = self.parse_comparison()
-                    out = binaryoperations.In(left, right)
                 else:
-                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftBracket:
-                        self.logger.debug("Found index, parsing...")
-                        self.advance()
-                        index = self.parse_expression()
-                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Colon:
-                            self.advance()
-                            if self.current_token is not None and self.current_token.kind == lexer.TokenKind.RightBracket:
-                                out = nodes.VariableSlice(name, index, NullLiteral())
-                            else:
-                                end = self.parse_expression()
-                                out = nodes.VariableSlice(name, index, end)
-                        self.consume(lexer.TokenKind.RightBracket, "Expected ']' after index")
-                        out = nodes.VariableIndex(name, index)
-                    else:
-                        out = nodes.VariableReference(name)
+                    out = nodes.VariableReference(name)
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.LeftParen:
@@ -388,8 +388,10 @@ class Parser:
                         elements.append(self.parse_expression())
                         if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
                             self.advance()
+                        else:
+                            break
                     out = TupleLiteral(elements)
-                self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression")
+                self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression/tuple")
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.LeftBracket:
@@ -399,6 +401,8 @@ class Parser:
                     elements.append(self.parse_expression())
                     if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
                         self.advance()
+                    else:
+                        break
                 self.consume(lexer.TokenKind.RightBracket, "Expected ']' after list")
                 out = ListLiteral(elements)
                 self.logger.debug(f"Returning {out}")
