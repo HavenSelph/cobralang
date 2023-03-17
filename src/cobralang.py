@@ -5,6 +5,7 @@ import cobralang.parser as parser
 import cobralang.lexer as lexer
 import logging
 from argparse import ArgumentParser
+from time import perf_counter
 
 
 log_levels = {
@@ -106,12 +107,15 @@ else:
             program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
             sleep(0.1)
             log.debug("Running program...")
+            start = perf_counter()
             try:
                 output = program.run(context)
             except KeyboardInterrupt as e:
                 print("KeyboardInterrupt")
                 continue
-            log.debug("Program ran successfully")
+            end = perf_counter()
+            if end - start > 0.2:
+                print(f"Program ran in {end - start:.2f}s")
             if output is not None:
                 print(output)
         except Exception as e:
