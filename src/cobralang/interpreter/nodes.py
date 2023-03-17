@@ -1,6 +1,6 @@
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import Null, Value
+from .datatypes import Null, Value, Integer
 
 
 class VariableReference(Node):
@@ -24,6 +24,23 @@ class VariableIndex(Node):
 
     def run(self, ctx: Context):
         return ctx[self.name][self.index.run(ctx)]
+
+
+class VariableSlice(Node):
+    def __init__(self, name: str, start: Node, end: Node):
+        self.name = name
+        self.start = start
+        self.end = end
+
+    def __repr__(self):
+        return f"{self.name}[{self.start}:{self.end}]"
+
+    def run(self, ctx: Context):
+        if self.start is None:
+            self.start = Integer(0)
+        if self.end is None:
+            self.end = Integer(-1)
+        return ctx[self.name][self.start.run(ctx):self.end.run(ctx)]
 
 
 class VariableDeclaration(Node):

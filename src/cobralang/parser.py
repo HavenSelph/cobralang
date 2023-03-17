@@ -365,6 +365,13 @@ class Parser:
                         self.logger.debug("Found index, parsing...")
                         self.advance()
                         index = self.parse_expression()
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Colon:
+                            self.advance()
+                            if self.current_token is not None and self.current_token.kind == lexer.TokenKind.RightBracket:
+                                out = nodes.VariableSlice(name, index, NullLiteral())
+                            else:
+                                end = self.parse_expression()
+                                out = nodes.VariableSlice(name, index, end)
                         self.consume(lexer.TokenKind.RightBracket, "Expected ']' after index")
                         out = nodes.VariableIndex(name, index)
                     else:
