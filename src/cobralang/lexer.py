@@ -258,7 +258,7 @@ class Lexer:
                     self.logger.debug(f"Found newline, updating {tokens[-1]}.newline_after to True")
                     tokens[-1].newline_after = True
                     self.advance()
-                case " ":
+                case char if char.isspace():
                     self.logger.debug(f"Found whitespace, updating {tokens[-1]}.space_after to True")
                     tokens[-1].space_after = True
                     self.advance()
@@ -413,4 +413,3 @@ class Lexer:
             tmp = "[\n" + "\n".join([repr(token) for token in tokens[1:]]) + "\n]"
             self.logger.debug(f"Tokens: {tmp}")
         return tokens[1:]
-
