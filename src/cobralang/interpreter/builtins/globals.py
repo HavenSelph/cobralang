@@ -58,7 +58,7 @@ class GetVariables(Function):
 
     def run(self, ctx: Context, args):
         variables = {}
-        for scope in ctx.scopes[::-1]:
+        for scope in ctx.scopes:
             variables.update(scope.variables)
         # TODO: make return dict
         return Tuple(tuple([key for key in variables.keys()]))
@@ -70,7 +70,7 @@ class GetFunctions(Function):
 
     def run(self, ctx: Context, args):
         functions = {}
-        for scope in ctx.scopes[::-1]:
+        for scope in ctx.scopes:
             functions.update(scope.functions)
         # TODO: make return dict
         return Tuple(tuple([key for key in functions.keys()]))
