@@ -1,19 +1,24 @@
 fn join(val, list) {
-    let i = 0;
-    let str = "";
+    let i = 0
+    let str = ""
     while (i < len(list)) {
-        str += val + list[i];
-        i += 1;
+        str += val + list[i]
+        i += 1
     }
     return str
 }
 
 fn split(val, str) {
-    let list = [];
-    let i = 0;
-    while (i < len(str)) {
-        list += str[i:i+len(val)];
-        i += len(val);
+    let list = []
+    let start = 0
+    let i = 0
+    while i < len(str) {
+        if (str[i] == val) {
+            append(list, str[start:i])
+            start = i + 1
+        }
+        i += 1
     }
+    append(list, str[start:len(str)])
     return list
 }
