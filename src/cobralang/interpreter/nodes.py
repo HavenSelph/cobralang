@@ -1,6 +1,7 @@
+from __future__ import annotations
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import Null, Value, Integer
+from .datatypes import Value, Null
 
 
 class VariableReference(Node):
@@ -14,8 +15,8 @@ class VariableReference(Node):
         return ctx[self.name]
 
 
-class VariableIndex(Node):
-    def __init__(self, name: str, index: Node):
+class Subscript(Node):
+    def __init__(self, name: VariableReference | Value | Subscript, index: Node):
         self.name = name
         self.index = index
 
@@ -23,24 +24,12 @@ class VariableIndex(Node):
         return f"{self.name}[{self.index}]"
 
     def run(self, ctx: Context):
-        return ctx[self.name][self.index.run(ctx)]
-
-
-class VariableSlice(Node):
-    def __init__(self, name: str, start: Node, end: Node):
-        self.name = name
-        self.start = start
-        self.end = end
-
-    def __repr__(self):
-        return f"{self.name}[{self.start}:{self.end}]"
-
-    def run(self, ctx: Context):
-        if self.start is None:
-            self.start = Integer(0)
-        if self.end is None:
-            self.end = Integer(-1)
-        return ctx[self.name][self.start.run(ctx):self.end.run(ctx)]
+        if isinstance(self.name, Value):
+            return self.name.value[self.index.run(ctx)]
+        elif isinstance(self.name, Subscript):
+            return self.name.run(ctx)[self.index.run(ctx)]
+        elif isinstance(self.name, VariableReference):
+            return ctx[self.name.name][self.index.run(ctx)]
 
 
 class VariableDeclaration(Node):
@@ -63,23 +52,26 @@ class Assignment(Node):
     def __repr__(self):
         return f"{self.left} = {self.right}"
 
-    def run(self, ctx: Context):
-        if not isinstance(self.left, VariableReference):
-            raise TypeError("Can only assign to a variable")
-        ctx[self.left.name] = self.right.run(ctx)
+    def run(self, ctx: Context):  # allow x[0][0] = 1
+        if isinstance(self.left, VariableReference):
+            ctx[self.left.name] = self.right.run(ctx)
+        elif isinstance(self.left, Subscript):
+            pass
+        else:
+            raise Exception(f"Invalid assignment target: {self}")
 
 
-class IndexAssignment(Node):
-    def __init__(self, left: str, index: Node, right: Node):
-        self.left = left
-        self.index = index
-        self.right = right
-
-    def __repr__(self):
-        return f"{self.left}[{self.index}] = {self.right}"
-
-    def run(self, ctx: Context):
-        ctx[self.left][self.index.run(ctx)] = self.right.run(ctx)
+# class SubscriptAssignment(Node):
+#     def __init__(self, left: str, index: Node, right: Node):
+#         self.left = left
+#         self.index = index
+#         self.right = right
+#
+#     def __repr__(self):
+#         return f"{self.left}[{self.index}] = {self.right}"
+#
+#     def run(self, ctx: Context):
+#         ctx[self.left][self.index.run(ctx)] = self.right.run(ctx)
 
 
 class Block(Node):
@@ -91,9 +83,21 @@ class Block(Node):
 
     def run(self, ctx: Context):
         ctx.push_scope()
+        out = Null()
+        try:
+            for statement in self.statements:
+                out = statement.run(ctx)
+            return out
+        finally:
+            ctx.pop_scope()
+
+
+class FunctionBlock(Block):
+    def run(self, ctx: Context):
+        out = Null()
         for statement in self.statements:
             out = statement.run(ctx)
-        ctx.pop_scope()
+        return out
 
 
 class Program(Block):
@@ -129,14 +133,16 @@ class Function:
 
     def run(self, ctx: Context, args: list[Value]):
         ctx.push_scope()
-        for name, arg in zip(self.args, args):
-            ctx.current_scope().variables[name] = arg
+        result = Null()
         try:
+            for name, arg in zip(self.args, args):
+                ctx.current_scope().variables[name] = arg
             result = self.body.run(ctx)
         except ReturnException as e:
             result = e.value
-        ctx.pop_scope()
-        return result
+        finally:
+            ctx.pop_scope()
+            return result
 
 
 class FunctionDefinition(Node):
