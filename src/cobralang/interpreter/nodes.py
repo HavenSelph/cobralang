@@ -1,7 +1,7 @@
 from __future__ import annotations
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import Value, Null
+from .datatypes import Value, Null, Dict, Tuple
 
 
 class VariableReference(Node):
@@ -24,6 +24,8 @@ class Subscript(Node):
         return f"{self.name}[{self.index}]"
 
     def run(self, ctx: Context):
+        if isinstance(self.name, Node):
+            return self.name.run(ctx)[self.index.run(ctx)]
         if isinstance(self.name, Value):
             return self.name.value[self.index.run(ctx)]
         elif isinstance(self.name, Subscript):
@@ -132,26 +134,52 @@ class Program(Block):
 
 
 class Function:
-    def __init__(self, name: str, args: list, body: Node):
+    def __init__(self, name: str, posargs: list[str], varargs: str | None, kwargs: dict[str,Node], varkwargs: str | None, body: FunctionBlock):
         self.name = name
-        self.args = args
+        self.posargs = posargs
+        self.varargs = varargs
+        self.kwargs = kwargs
+        self.varkwargs = varkwargs
         self.body = body
 
     def __repr__(self):
-        return f"Function({self.name} ({self.args}) {{ {self.body} }})"
+        return f"Function({self.name}, {self.posargs}, {self.varargs}, {self.kwargs}, {self.varkwargs}, {self.body})"
 
-    def run(self, ctx: Context, args: list[Value]):
+    def run(self, ctx: Context, args: list[Value], _kwargs: dict[str,Value]):
+        if len(args) < len(self.posargs):
+            raise Exception(f"Function {self.name} expected {len(self.posargs)} arguments, got {len(args)}")
         ctx.push_scope()
-        result = Null()
+        posargs, varargs = args, []
+        if len(args) > len(self.posargs):
+            if self.varargs is None:
+                raise Exception(f"Function {self.name} expected {len(self.posargs)} arguments, got {len(args)}")
+            posargs = args[:len(self.posargs)]
+            varargs = args[len(self.posargs):]
+        kwargs = self.kwargs.copy()
+        undefined_kwargs = set(_kwargs.keys()) - set(self.kwargs.keys())
+        if undefined_kwargs and self.varkwargs is None:
+            raise Exception(f"Function {self.name} got unexpected keyword arguments {undefined_kwargs}")
+        defined_kwargs = set(_kwargs.keys()) - undefined_kwargs
+        if defined_kwargs:
+            kwargs.update({k: _kwargs[k] for k in defined_kwargs})
+        if undefined_kwargs:
+            kwargs.update({self.varkwargs: Dict({k: _kwargs[k] for k in undefined_kwargs})})
+        if varargs:
+            # noinspection PyTypeChecker
+            kwargs[self.varargs] = Tuple(varargs)
+        for name, arg in zip(self.posargs, posargs):
+            ctx.current_scope().variables[name] = arg
+        for name, arg in kwargs.items():
+            ctx.current_scope().variables[name] = arg
         try:
-            for name, arg in zip(self.args, args):
-                ctx.current_scope().variables[name] = arg
-            result = self.body.run(ctx)
+            out = self.body.run(ctx)
+            if not isinstance(out, Null):
+                return out
         except ReturnException as e:
-            result = e.value
+            out = e.value
+            return out
         finally:
             ctx.pop_scope()
-            return result
 
 
 class FunctionDefinition(Node):
@@ -162,19 +190,21 @@ class FunctionDefinition(Node):
         return f"FunctionDeclaration({self.function})"
 
     def run(self, ctx: Context):
+        self.function.kwargs = {k: v.run(ctx) for k, v in self.function.kwargs.items()}
         ctx.push_function(self.function.name, self.function)
 
 
 class FunctionCall(Node):
-    def __init__(self, name: str, args: list[Node]):
+    def __init__(self, name: str, args: list[Node], kwargs: dict[str:Node]):
         self.name = name
         self.args = args
+        self.kwargs = kwargs
 
     def __repr__(self):
-        return f"{self.name}({', '.join(map(repr, self.args))})"
+        return f"FunctionCall({self.name}, {self.args}, {self.kwargs})"
 
     def run(self, ctx: Context):
+        function = ctx.get_function(self.name)
         args = [arg.run(ctx) for arg in self.args]
-        if len(self.args) != len(ctx.get_function(self.name).args):
-            raise TypeError(f"Function '{self.name}' expects {len(ctx.get_function(self.name).args)} argument(s) ({', '.join(ctx.get_function(self.name).args)}), {len(self.args)} argument(s) ({', '.join(map(repr, self.args))}) were passed")
-        return ctx.get_function(self.name).run(ctx, args)
+        kwargs = {k: v.run(ctx) for k, v in self.kwargs.items()}
+        return function.run(ctx, args, kwargs)
