@@ -251,9 +251,9 @@ class Lexer:
         def make_position() -> Position:
             return Position(self.position.index, self.position.line, self.position.column)
 
-        def push_token(kind: TokenKind, value: str, start: Position=None):
+        def push_token(kind: TokenKind, _value: str, _start: Position=None):
             tokens.append(Token(
-                kind, position_end=make_position(), position_start=start or make_position(), value=value
+                kind, position_end=make_position(), position_start=_start or make_position(), value=_value
             ))
             self.logger.debug(f"Pushed {tokens[-1]}) to stack")
 
