@@ -190,12 +190,7 @@ class Parser:
             case lexer.TokenKind.While:
                 self.logger.debug("Parsing while statement")
                 self.advance()
-                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
-                    self.advance()
-                    condition = self.parse_expression()
-                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after condition in 'while' statement")
-                else:
-                    condition = self.parse_expression()
+                condition = self.parse_expression()
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'while' statement")
                 body = self.parse_block()
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'while' statement")
@@ -234,7 +229,7 @@ class Parser:
                     right = binaryoperations.Subtract(left, IntegerLiteral(1))
                 case lexer.TokenKind.Equal:
                     self.advance()
-                    right = self.parse_assignment()
+                    right = self.parse_comparison()
                 case lexer.TokenKind.PlusEqual:
                     self.advance()
                     right = binaryoperations.Add(left, self.parse_assignment())
@@ -341,6 +336,12 @@ class Parser:
             case lexer.TokenKind.Minus:
                 self.advance()
                 return unaryoperations.Minus(self.parse_atom())
+            case lexer.TokenKind.PlusPlus:
+                self.advance()
+                return unaryoperations.Plus(self.parse_atom())
+            case lexer.TokenKind.MinusMinus:
+                self.advance()
+                return unaryoperations.Plus(self.parse_atom())
             case lexer.TokenKind.StringLiteral:
                 out = StringLiteral(self.current_token.value)
                 self.advance()
@@ -414,6 +415,22 @@ class Parser:
                         break
                 self.consume(lexer.TokenKind.RightBracket, "Expected ']' after list")
                 out = ListLiteral(elements)
+                self.logger.debug(f"Returning {out}")
+                return out
+            case lexer.TokenKind.LeftBrace:
+                self.advance()
+                elements = []
+                while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightBrace:
+                    key = self.parse_expression()
+                    self.consume(lexer.TokenKind.Colon, "Expected ':' after key in dictionary")
+                    value = self.parse_expression()
+                    elements.append((key, value))
+                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                        self.advance()
+                    else:
+                        break
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after dictionary")
+                out = DictionaryLiteral(elements)
                 self.logger.debug(f"Returning {out}")
                 return out
         raise SyntaxError(f"Unexpected token: {self.current_token} {self.current_token.position_end}:{self.current_token.position_end}")
