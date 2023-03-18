@@ -1,0 +1,43 @@
+import random
+import utils
+
+fn is_winner(choice, computer_choice) {
+    if choice == computer_choice {
+        return 2
+    }
+    if choice == "rock" & computer_choice == "scissors" {
+        return 1
+    }
+    if choice == "paper" & computer_choice == "rock" {
+        return 1
+    }
+    if choice == "scissors" & computer_choice == "paper" {
+        return 1
+    }
+    # if we get here, the computer wins
+    return 0
+}
+
+print("Welcome to Rock, Paper, Scissors!")
+print("Type 'rock', 'paper', or 'scissors' to play.")
+print("Type 'quit' to quit.")
+let choices = ["rock", "paper", "scissors"]
+while True {
+    print("What is your choice?")
+    let choice = input(">> ")
+    if choice == "quit" {
+        break
+    }
+    let computer_choice = choice(choices)
+    print(join(" ", ["You chose", choice, "and the computer chose", computer_choice]))
+    let win = is_winner(choice, computer_choice)
+        if win == 0 {
+        print("You lose!")
+    }
+    if win == 1 {
+        print("You win!")
+    }
+    if win == 2 {
+        print("It's a tie!")
+    }
+}
