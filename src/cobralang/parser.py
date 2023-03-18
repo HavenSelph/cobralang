@@ -55,10 +55,10 @@ class Parser:
             self.logger.debug("Current token is now None EOF")
 
     def consume(self, kind: lexer.TokenKind, error_message: str="Unexpected token"):
-        if self.current_token.kind == kind:
+        if self.current_token is not None and self.current_token.kind == kind:
             self.advance()
         else:
-            raise SyntaxError(f"{error_message}: {self.current_token.kind} != {kind}")
+            raise SyntaxError(f"{error_message}: {self.current_token} is not {kind}")
 
     def parse(self) -> Node:
         return self.parse_program()
@@ -166,25 +166,25 @@ class Parser:
             case lexer.TokenKind.If:
                 self.logger.debug("Parsing if statement")
                 self.advance()
-                if self.current_token.kind is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
-                    self.advance()
-                    condition = self.parse_expression()
-                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after condition in 'if' statement")
-                else:
-                    condition = self.parse_expression()
+                condition = self.parse_expression()
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'if' statement")
                 if_body = self.parse_block()
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'if' statement")
-                if self.current_token.kind == lexer.TokenKind.Elif:
-                    raise NotImplementedError("elif statements are not yet implemented")
-                if self.current_token.kind == lexer.TokenKind.Else:
+                if_statement = [(condition, if_body),]
+                while self.current_token is not None and self.current_token.kind == lexer.TokenKind.Elif:
+                    self.advance()
+                    condition = self.parse_expression()
+                    self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after condition in 'elif' statement")
+                    elif_body = self.parse_block()
+                    self.consume(lexer.TokenKind.RightBrace, "Expected '}' after body in 'elif' statement")
+                    if_statement.append((condition, elif_body))
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Else:
                     self.advance()
                     self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after 'else' in 'if' statement")
                     else_body = self.parse_block()
                     self.consume(lexer.TokenKind.RightBrace, "Expected '}' after 'else' body in 'if' statement")
-                    out = IfStatement(condition, if_body, else_body)
-                else:
-                    out = IfStatement(condition, if_body)
+                    if_statement.append((BooleanLiteral(True), else_body))
+                out = IfStatement(if_statement)
                 self.logger.debug(f"Returning {out}")
                 return out
             case lexer.TokenKind.While:
@@ -209,15 +209,15 @@ class Parser:
         if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Or:
             self.advance()
             right = self.parse_comparison()
-            out = binaryoperations.Or(right, left)
+            out = binaryoperations.Or(left, right)
         elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.And:
             self.advance()
             right = self.parse_comparison()
-            out = binaryoperations.And(right, left)
+            out = binaryoperations.And(left, right)
         elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.In:
             self.advance()
             right = self.parse_comparison()
-            out = binaryoperations.In(right, left)
+            out = binaryoperations.In(left, right)
         else:
             out = left
         return out
