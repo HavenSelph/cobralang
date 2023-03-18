@@ -13,7 +13,14 @@ class Scope:
 class Context:
     def __init__(self):
         self.scopes = [Scope()]
-        from .builtins.globals import std_functions
+        self.register_builtins()
+
+    def clear_scopes(self):
+        self.scopes = [Scope()]
+        self.register_builtins()
+
+    def register_builtins(self):
+        from .builtins import std_functions
         for name, function in std_functions.items():
             self.push_function(name, function)
 
