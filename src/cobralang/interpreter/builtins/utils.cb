@@ -65,3 +65,13 @@ fn reverse(list) {
     }
     return list
 }
+
+fn enumerate(list, start) {
+    let i = 0
+    let new_list = []
+    while (i < len(list)) {
+        append(new_list, [start + i, list[i]])
+        i++
+    }
+    return new_list
+}

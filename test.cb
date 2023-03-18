@@ -1,5 +1,1 @@
-let dictionary = {
-    "test": "test",
-    "test2": "test2"
-}
-print(dictionary)
+add(1, 2, 3, test=10, test2=20)
