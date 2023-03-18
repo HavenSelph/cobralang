@@ -25,6 +25,7 @@ class IfStatement(Node):
         for condition, body in self.body:
             if condition.run(ctx):
                 body.run(ctx)
+                return
 
 
 class WhileStatement(Node):
