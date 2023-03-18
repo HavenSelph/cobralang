@@ -1,7 +1,8 @@
-from ..interpreter import Context, Node
 from ..nodes import Function, Block
 from ..exceptions import StopException
 from ..datatypes import *
+from time import time
+from random import randint
 
 
 class EmptyBlock(Block):
@@ -30,6 +31,14 @@ class PrintFunction(Function):
     def run(self, ctx: Context, args):
         print(*args)
         return None
+
+
+class TimeFunction(Function):
+    def __init__(self):
+        super().__init__("time", [], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return Float(time())
 
 
 class DumpContext(Function):
@@ -200,10 +209,19 @@ class LenFunction(Function):
         return Integer(len(args[0].value))
 
 
+class RandomFunction(Function):
+    def __init__(self):
+        super().__init__("random", ["min", "max"], EmptyBlock())
+
+    def run(self, ctx: Context, args):
+        return Integer(randint(args[0].value, args[1].value))
+
+
 std_functions = {
     "print": PrintFunction(),
     "exit": ExitFunction(),
     "dump": DumpContext(),
+    "time": TimeFunction(),
     "getctx": GetContext(),
     "getvars": GetVariables(),
     "getvar": GetVariable(),
@@ -222,4 +240,5 @@ std_functions = {
     "list": AsListFunction(),
     "tuple": AsTupleFunction(),
     "len": LenFunction(),
+    "random": RandomFunction(),
 }
