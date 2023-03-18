@@ -49,7 +49,10 @@ class Parser:
         else:
             self.current_token = self.tokens[self.index]
             self.next_token = self.tokens[self.index+1]
-        self.logger.debug(f"Current token is now {self.current_token}")
+        if self.current_token is not None:
+            self.logger.debug(f"Current token is now {self.current_token}{self.current_token.position_end}:{self.current_token.position_start}")
+        else:
+            self.logger.debug("Current token is now None EOF")
 
     def consume(self, kind: lexer.TokenKind, error_message: str="Unexpected token"):
         if self.current_token.kind == kind:
@@ -150,6 +153,12 @@ class Parser:
                 out = ReturnStatement(self.parse_expression())
                 self.logger.debug(f"Returning {out}")
                 return out
+            case lexer.TokenKind.Break:
+                self.logger.debug("Parsing break statement")
+                self.advance()
+                out = ReturnStatement(NullLiteral())
+                self.logger.debug(f"Returning {out}")
+                return out
         return self.parse_block_statements()
 
     def parse_block_statements(self) -> Node:
@@ -215,7 +224,7 @@ class Parser:
 
     def parse_assignment(self) -> Node:
         left = self.parse_comparison()
-        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.PlusEqual, lexer.TokenKind.MinusEqual, lexer.TokenKind.MultiplyEqual, lexer.TokenKind.DivideEqual, lexer.TokenKind.PlusPlus, lexer.TokenKind.MinusMinus):
+        if self.current_token is not None and self.current_token.kind in (lexer.TokenKind.Equal, lexer.TokenKind.PlusEqual, lexer.TokenKind.MinusEqual, lexer.TokenKind.MultiplyEqual, lexer.TokenKind.DivideEqual, lexer.TokenKind.PlusPlus, lexer.TokenKind.MinusMinus, lexer.TokenKind.ModEqual):
             match self.current_token.kind:
                 case lexer.TokenKind.PlusPlus:
                     self.advance()
