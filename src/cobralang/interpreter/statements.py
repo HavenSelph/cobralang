@@ -1,6 +1,5 @@
 from .interpreter import Context, Node
 from .exceptions import ReturnException
-from .datatypes import Null
 from .nodes import Block
 
 
@@ -25,8 +24,7 @@ class IfStatement(Node):
     def run(self, ctx: Context):
         for condition, body in self.body:
             if condition.run(ctx):
-                out = body.run(ctx)
-                break
+                body.run(ctx)
 
 
 class WhileStatement(Node):
