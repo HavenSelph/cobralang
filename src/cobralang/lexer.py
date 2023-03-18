@@ -99,6 +99,7 @@ class TokenKind(Enum):
     # Statements
     Import = auto()
     Return = auto()
+    Break = auto()
     Let = auto()
     Fn = auto()
     For = auto()
@@ -127,6 +128,7 @@ keywords = {
     # statements
     "import": TokenKind.Import,
     "return": TokenKind.Return,
+    "break": TokenKind.Break,
     "let": TokenKind.Let,
     "fn": TokenKind.Fn,
 
@@ -246,9 +248,12 @@ class Lexer:
         # Initialize tokens list, EOF token is only there so that we can always access tokens[-1], removed at return
         tokens = [Token(TokenKind.EOF, Position(-1, 0, -1), Position(-1, 0, -1))]
 
+        def make_position() -> Position:
+            return Position(self.position.index, self.position.line, self.position.column)
+
         def push_token(kind: TokenKind, value: str, start: Position=None):
             tokens.append(Token(
-                kind, position_end=self.position, position_start=start or self.position, value=value
+                kind, position_end=make_position(), position_start=start or make_position(), value=value
             ))
             self.logger.debug(f"Pushed {tokens[-1]}) to stack")
 
@@ -268,11 +273,11 @@ class Lexer:
                     self.advance()
                     if self.current_char == "=":
                         self.logger.debug("Found !=, pushing NotEqual token to stack")
-                        tokens.append(Token(TokenKind.NotEqual, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.NotEqual, position_end=make_position(), position_start=make_position()))
                         self.advance()
                     else:
                         self.logger.debug("Found !, pushing Not token to stack")
-                        tokens.append(Token(TokenKind.Not, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.Not, position_end=make_position(), position_start=make_position()))
                 case "#":
                     self.logger.debug("Found #, skipping to end of line")
                     while self.current_char != "\n":
@@ -282,11 +287,11 @@ class Lexer:
                     self.advance()
                     if self.current_char == "=":
                         self.logger.debug("Found ==, pushing Equals token to stack")
-                        tokens.append(Token(TokenKind.EqualEqual, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.EqualEqual, position_end=make_position(), position_start=make_position()))
                         self.advance()
                     else:
                         self.logger.debug("Found =, pushing Assign token to stack")
-                        tokens.append(Token(TokenKind.Equal, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.Equal, position_end=make_position(), position_start=make_position()))
                 case char if char == "<" or char == ">":
                     self.logger.debug(f"Found {self.current_char}, checking for equality")
                     self.advance()
@@ -294,14 +299,14 @@ class Lexer:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.LessEqual if char == "<" else TokenKind.GreaterEqual,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                         self.advance()
                     else:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.Less if char == "<" else TokenKind.Greater,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                 case char if char == "+" or char == "-":
                     self.logger.debug(f"Found {self.current_char}, checking for equals")
@@ -310,21 +315,21 @@ class Lexer:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.PlusEqual if char == "+" else TokenKind.MinusEqual,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                         self.advance()
                     elif self.current_char == char:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char}{self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.PlusPlus if char == "+" else TokenKind.MinusMinus,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                         self.advance()
                     else:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.Plus if char == "+" else TokenKind.Minus,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                 case char if char == "*" or char == "/" or char == "%":
                     self.logger.debug(f"Found {self.current_char}, checking for equals")
@@ -333,28 +338,28 @@ class Lexer:
                         self.logger.debug(f"Found =, pushing {char}= token to stack")
                         tokens.append(Token(
                             TokenKind.MultiplyEqual if char == "*" else TokenKind.DivideEqual if char == "/" else TokenKind.ModEqual,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                         self.advance()
                     elif self.current_char == "*" and char=="*":
                         self.logger.debug(f"Found *, pushing ** token to stack")
-                        tokens.append(Token(TokenKind.Power, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.Power, position_end=make_position(), position_start=make_position()))
                         self.advance()
                     elif self.current_char == "/" and char=="/":
                         self.logger.debug(f"Found /, pushing // token to stack")
-                        tokens.append(Token(TokenKind.FloorDivide, position_end=self.position, position_start=self.position))
+                        tokens.append(Token(TokenKind.FloorDivide, position_end=make_position(), position_start=make_position()))
                         self.advance()
                     else:
                         self.logger.debug(f"Found {self.current_char}, pushing {self.current_char} token to stack")
                         tokens.append(Token(
                             TokenKind.Multiply if char == "*" else TokenKind.Divide if char == "/" else TokenKind.Mod,
-                            position_end=self.position, position_start=self.position
+                            position_end=make_position(), position_start=make_position()
                         ))
                 # All characters
                 case char if char in single_character_tokens:
                     self.logger.debug(f"Pushing Token({single_character_tokens[char]}) to stack")
                     tokens.append(Token(
-                        single_character_tokens[char], position_end=self.position, position_start=self.position
+                        single_character_tokens[char], position_end=make_position(), position_start=make_position()
                     ))
                     self.advance()
                 case char if char.isdigit() or char == ".":
