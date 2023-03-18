@@ -6,7 +6,7 @@ fn join(val, list) {
     let str = list[0]
     while (i < len(list)) {
         str += val + list[i]
-        i += 1
+        i++
     }
     return str
 }
@@ -20,7 +20,7 @@ fn split(val, str) {
             append(list, str[start:i])
             start = i + 1
         }
-        i += 1
+        i++
     }
     append(list, str[start:len(str)])
     return list
@@ -36,9 +36,9 @@ fn sort(list) {
                 list[i] = list[j]
                 list[j] = temp
             }
-            j += 1
+            j++
         }
-        i += 1
+        i++
     }
     return list
 }
@@ -48,7 +48,7 @@ fn sum(list) {
     let total = 0
     while (i < len(list)) {
         total += list[i]
-        i += 1
+        i++
     }
     return total
 }
@@ -60,8 +60,8 @@ fn reverse(list) {
         let temp = list[i]
         list[i] = list[j]
         list[j] = temp
-        i += 1
-        j -= 1
+        i++
+        j--
     }
     return list
 }
