@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from .exceptions import StopException
 
 
 class Scope:
