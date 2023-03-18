@@ -4,18 +4,15 @@ import utils
 fn is_winner(choice, computer_choice) {
     if choice == computer_choice {
         return 2
-    }
-    if choice == "rock" & computer_choice == "scissors" {
+    } elif choice == "rock" & computer_choice == "scissors" {
         return 1
-    }
-    if choice == "paper" & computer_choice == "rock" {
+    } elif choice == "paper" & computer_choice == "rock" {
         return 1
-    }
-    if choice == "scissors" & computer_choice == "paper" {
+    } elif choice == "scissors" & computer_choice == "paper" {
         return 1
+    } else {
+        return 0
     }
-    # if we get here, the computer wins
-    return 0
 }
 
 print("Welcome to Rock, Paper, Scissors!")
@@ -27,17 +24,18 @@ while True {
     let choice = input(">> ")
     if choice == "quit" {
         break
-    }
-    let computer_choice = choice(choices)
-    print(join(" ", ["You chose", choice, "and the computer chose", computer_choice]))
-    let win = is_winner(choice, computer_choice)
+    } elif choice in choices {
+        let computer_choice = choice(choices)
+        print(join(" ", ["You chose", choice, "and the computer chose", computer_choice]))
+        let win = is_winner(choice, computer_choice)
         if win == 0 {
-        print("You lose!")
-    }
-    if win == 1 {
-        print("You win!")
-    }
-    if win == 2 {
-        print("It's a tie!")
+            print("You lose!")
+        } elif win == 1 {
+            print("You win!")
+        } elif win == 2 {
+            print("It's a tie!")
+        }
+    } else {
+        print("That is not a valid choice.")
     }
 }

@@ -1,1 +1,5 @@
-import utils
+let dictionary = {
+    "test": "test",
+    "test2": "test2"
+}
+print(dictionary)
