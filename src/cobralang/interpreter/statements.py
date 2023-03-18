@@ -1,5 +1,6 @@
 from .interpreter import Context, Node
 from .exceptions import ReturnException
+from .datatypes import Null
 from .nodes import Block
 
 
@@ -15,20 +16,17 @@ class ReturnStatement(Node):
 
 
 class IfStatement(Node):
-    def __init__(self, condition: Node, body: Block, else_body: Block=Block([])):
-        self.condition = condition
+    def __init__(self, body: list[tuple[Node, Block]]):
         self.body = body
-        self.else_body = else_body
 
     def __repr__(self):
-        return f"if {self.condition} {self.body} else {self.else_body}"
+        return f"IfStatement: {self.body}"
 
     def run(self, ctx: Context):
-        if self.condition.run(ctx):
-            out = self.body.run(ctx)
-        else:
-            out = self.else_body.run(ctx)
-        return out
+        for condition, body in self.body:
+            if condition.run(ctx):
+                out = body.run(ctx)
+                break
 
 
 class WhileStatement(Node):
