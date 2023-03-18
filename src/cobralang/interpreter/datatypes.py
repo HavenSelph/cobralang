@@ -360,7 +360,7 @@ class String(Value):
         super().__init__(value)
 
     def __repr__(self):
-        return f'"{self.value}"'
+        return self.value.__repr__()
 
     def __str__(self):
         return self.value
