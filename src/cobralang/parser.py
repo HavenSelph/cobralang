@@ -144,13 +144,17 @@ class Parser:
             case lexer.TokenKind.Import:
                 self.logger.debug("Parsing import statement")
                 self.advance()
-                name = all_builtins.get(self.current_token.value, self.current_token.value)
-                if name[-3:] != ".cb":
-                    name += ".cb"
-                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
-                self.logger.debug(f"Attempting to locate file {name}")
                 from pathlib import Path
-                path = Path("./" + name).absolute()
+                if self.current_token.value in all_builtins:
+                    name = all_builtins[self.current_token.value]
+                else:
+                    name = self.current_token.value
+                    if name[-3:] != ".cb":
+                        name += ".cb"
+                        name = "./"+name
+                    self.logger.debug(f"Attempting to locate file {name}")
+                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
+                path = Path(name).absolute()
                 if not path.exists():
                     raise FileNotFoundError(f"File {name} not found")
                 self.logger.debug(f"File {name} found")

@@ -7,6 +7,7 @@ import cobralang.lexer as lexer
 import logging
 from argparse import ArgumentParser
 from time import perf_counter
+from os import environ
 
 
 log_levels = {
