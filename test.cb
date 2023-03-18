@@ -1,1 +1,7 @@
-add(1, 2, 3, test=10, test2=20)
+if True {
+print("true")
+} elif True {
+print("true")
+} else {
+print("true")
+}

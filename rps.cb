@@ -26,7 +26,7 @@ while True {
         break
     } elif choice in choices {
         let computer_choice = choice(choices)
-        print(join(" ", ["You chose", choice, "and the computer chose", computer_choice]))
+        print("You chose: ", choice, ", and the computer chose: ", computer_choice, ".", sep="")
         let win = is_winner(choice, computer_choice)
         if win == 0 {
             print("You lose!")
