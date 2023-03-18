@@ -23,9 +23,9 @@ argparser = ArgumentParser(
     description="A simple interpreter for the CobraLang programming language.",
 )
 
-argparser.add_argument('filepath', help="The path to the file to be interpreted.", type=str)
-argparser.add_argument('--logging_level', default="NONE", help="The logging level to use. Defaults to 51 (no logs).", choices=log_levels.keys(), type=str)
-argparser.add_argument('--logging_path', default=None, help="The path to the log file. Defaults to the current directory.", type=str)
+argparser.add_argument('filepath', nargs="?", default=None, help="The path to the file to be interpreted.", type=str)
+argparser.add_argument('--logging_level', default="NONE", help="The logging level to use. Defaults to NONE (no logs).", choices=log_levels.keys(), type=str)
+argparser.add_argument('--logging_path', default=None, help="The path to the log file. Leave unspecified to log to console.", type=str)
 args = argparser.parse_args()
 
 log = logging.getLogger("CobraLang")
@@ -50,7 +50,7 @@ if log.getEffectiveLevel() <= 10:
 log.info("CobraLang runner started successfully")
 log.debug(f"{args!r}")
 
-if args.filepath != "repl":
+if args.filepath is not None:
     log.info("File specified, attempting to open...")
     filepath = Path(args.filepath).absolute()
 

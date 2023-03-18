@@ -1,7 +1,0 @@
-if True {
-print("true")
-} elif True {
-print("true")
-} else {
-print("true")
-}
