@@ -87,6 +87,8 @@ else:
         try:
             sleep(0.1)
             code = input(">>> ")
+            if code == "":
+                continue
             tmp = lexer.Lexer(code).tokenize()
             while (count_token(lexer.TokenKind.LeftParen, tmp) > count_token(lexer.TokenKind.RightParen, tmp))\
                     or (count_token(lexer.TokenKind.LeftBracket, tmp) > count_token(lexer.TokenKind.RightBracket, tmp))\
@@ -96,13 +98,6 @@ else:
                 if new == "":
                     break
                 tmp = lexer.Lexer(code).tokenize()
-            if code == "exit()":
-                break
-            elif code == "clear()":
-                context = Context()
-                continue
-            elif code == "":
-                continue
             tokens = lexer.Lexer(code, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).tokenize()
             program = parser.Parser(tokens, filename="<stdin>", logger=log, logging_level=log.getEffectiveLevel()).parse()
             sleep(0.1)
