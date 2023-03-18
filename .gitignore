@@ -130,5 +130,4 @@ dmypy.json
 
 # personal
 .idea/
-/src/Cobra Lang Repl.lnk
-./files
+files
