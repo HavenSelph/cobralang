@@ -1,4 +1,5 @@
 from cobralang.interpreter.interpreter import Context
+from cobralang.interpreter.nodes import Null
 from os.path import isfile, isdir, split, join
 from pathlib import Path
 import cobralang.parser as parser
@@ -111,7 +112,7 @@ else:
             end = perf_counter()
             if end - start > 0.2:
                 print(f"Program ran in {end - start:.2f}s")
-            if output is not None:
+            if output is not None and not isinstance(output, Null):
                 print(output)
         except Exception as e:
             log.exception(e)
