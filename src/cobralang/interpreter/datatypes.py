@@ -78,6 +78,18 @@ class TupleLiteral(Node):
         return Tuple(tuple([i.run(ctx) for i in self.elements]))
 
 
+class DictionaryLiteral(Node):
+    def __init__(self, elements: list):
+        self.elements = elements
+
+    def __repr__(self):
+        return f'{{{", ".join([str(i) for i in self.elements])}}}'
+
+    def run(self, ctx: Context):
+        print(self.elements)
+        return Dict({item[0].run(ctx): item[1].run(ctx) for item in self.elements})
+
+
 class SliceLiteral(Node):
     def __init__(self, start: Node, end: Node):
         self.start = start
@@ -170,10 +182,43 @@ class Tuple(Value):
     def __ne__(self, other):
         return Boolean(self.value != other.value)
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class Dict(Value):
-    # TODO: Implement
-    pass
+    def __init__(self, value: dict):
+        super().__init__(value)
+
+    def __repr__(self):
+        return f'{{{", ".join([f"{str(k)}: {str(v)}" for k, v in self.value.items()])}}}'
+
+    def __str__(self):
+        return self.__repr__()
+
+    def __bool__(self):
+        return len(self.value) != 0
+
+    def __getitem__(self, item: Value):
+        return self.value[item.value]
+
+    def __setitem__(self, key: Value, value: Value):
+        self.value[key.value] = value
+
+    def __len__(self):
+        return len(self.value)
+
+    def __iter__(self):
+        return iter(self.value)
+
+    def __contains__(self, item: Node):
+        return item in self.value
+
+    def __eq__(self, other):
+        return Boolean(self.value == other.value)
+
+    def __ne__(self, other):
+        return Boolean(self.value != other.value)
 
 
 class Integer(Value):
@@ -240,6 +285,9 @@ class Integer(Value):
     def __neg__(self):
         return Integer(-self.value)
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class Float(Value):
     def __init__(self, value: float):
@@ -303,6 +351,9 @@ class Float(Value):
     def __neg__(self):
         return Float(-self.value)
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class String(Value):
     def __init__(self, value: str):
@@ -337,6 +388,9 @@ class String(Value):
     def __eq__(self, other):
         return Boolean(self.value == other.value)
 
+    def __hash__(self):
+        return hash(self.value)
+
 
 class Boolean(Value):
     def __init__(self, value: bool):
@@ -359,6 +413,9 @@ class Boolean(Value):
 
     def __bool__(self):
         return self.value
+
+    def __hash__(self):
+        return hash(self.value)
 
 
 class Null(Value):
