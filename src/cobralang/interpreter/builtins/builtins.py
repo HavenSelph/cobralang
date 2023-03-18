@@ -1,6 +1,8 @@
 from ..nodes import Function, FunctionBlock
 from typing import Callable
 from ..datatypes import *
+from time import time
+from random import randint
 
 
 std_functions = {}
@@ -26,12 +28,12 @@ def register_function(name: str, args: list[str]=None, varargs: str | None=None,
     return inner
 
 
-def get_arg(ctx, name):
+def get_arg(ctx: Context, name: str):
     return ctx[name].value
 
 
 @register_function("print", varargs="args", kwargs={"sep": String(" "), "end": String("\n"), "flush": Boolean(True)})
-def print_function(ctx):
+def print_function(ctx: Context):
     # print(*args, sep=" ", end="\n", flush=True)
     args = get_arg(ctx, "args")
     sep = get_arg(ctx, "sep")
@@ -41,7 +43,7 @@ def print_function(ctx):
 
 
 @register_function("exit", kwargs={"code": Integer(0)})
-def exit_function(ctx):
+def exit_function(ctx: Context):
     # exit(code=0)
     code = get_arg(ctx, "code")
     exit(code)
@@ -67,25 +69,149 @@ def clear_function(ctx: Context):
     ctx.clear_scopes()
 
 
-# std_functions = {
-#     "time": TimeFunction(),
-#     "getctx": GetContext(),
-#     "getvars": GetVariables(),
-#     "getvar": GetVariable(),
-#     "getfuncs": GetFunctions(),
-#     "getfunc": GetFunction(),
-#     "setvar": SetVariable(),
-#     "global": SetGlobal(),
-#     "input": InputFunction(),
-#     "insert": InsertFunction(),
-#     "append": AppendFunction(),
-#     "type": TypeFunction(),
-#     "int": AsIntFunction(),
-#     "float": AsFloatFunction(),
-#     "str": AsStringFunction(),
-#     "bool": AsBoolFunction(),
-#     "list": AsListFunction(),
-#     "tuple": AsTupleFunction(),
-#     "len": LenFunction(),
-#     "random": RandomFunction(),
-# }
+@register_function("time", kwargs={"as_int": Boolean(False)})
+def time_function(ctx: Context):
+    # time(as_int=False)
+    as_int = get_arg(ctx, "as_int")
+    if as_int:
+        return Float(time())
+    return Integer(int(time()))
+
+
+@register_function("getvars")
+def get_variables_function(ctx: Context):
+    # getvars()
+    variables = {}
+    for scope in ctx.scopes:
+        for name, value in scope.variables.items():
+            variables[name] = value
+    return List(list(variables.keys()))
+
+
+@register_function("getvar", args=["name"])
+def get_variable_function(ctx: Context):
+    # getvar(name)
+    name = get_arg(ctx, "name")
+    return ctx[name]
+
+
+@register_function("getfuncs")
+def get_functions_function(ctx: Context):
+    # getfuncs()
+    functions = {}
+    for scope in ctx.scopes:
+        for name, value in scope.functions.items():
+            functions[name] = value
+    return List(list(functions.keys()))
+
+
+@register_function("setvar", args=["name", "value"])
+def set_variable_function(ctx: Context):
+    # setvar(name, value)
+    name = get_arg(ctx, "name")
+    value = get_arg(ctx, "value")
+    ctx[name] = value
+
+
+@register_function("global", args=["name", "value"])
+def set_global_function(ctx: Context):
+    # global(name, value)
+    name = get_arg(ctx, "name")
+    value = get_arg(ctx, "value")
+    ctx.scopes[0].variables[name] = value
+
+
+@register_function("input", args=["prompt"])
+def input_function(ctx: Context):
+    # input(prompt="")
+    prompt = get_arg(ctx, "prompt")
+    return String(input(prompt))
+
+
+@register_function("insert", args=["list", "index", "value"])
+def insert_function(ctx: Context):
+    # insert(list, index, value)
+    list_ = get_arg(ctx, "list")
+    index = get_arg(ctx, "index")
+    value = get_arg(ctx, "value")
+    list_.insert(index, value)
+
+
+@register_function("append", args=["list", "value"])
+def append_function(ctx: Context):
+    # append(list, value)
+    list_ = get_arg(ctx, "list")
+    value = get_arg(ctx, "value")
+    list_.append(value)
+
+
+@register_function("pop", args=["list", "index"])
+def pop_function(ctx: Context):
+    # pop(list, index)
+    list_ = get_arg(ctx, "list")
+    index = get_arg(ctx, "index")
+    return list_.pop(index)
+
+
+@register_function("type", args=["value"])
+def type_function(ctx: Context):
+    # type(value)
+    value = get_arg(ctx, "value")
+    return String(value.__class__.__name__)
+
+
+@register_function("int", args=["value"])
+def int_function(ctx: Context):
+    # int(value)
+    value = get_arg(ctx, "value")
+    return Integer(int(value))
+
+
+@register_function("float", args=["value"])
+def float_function(ctx: Context):
+    # float(value)
+    value = get_arg(ctx, "value")
+    return Float(float(value))
+
+
+@register_function("str", args=["value"])
+def str_function(ctx: Context):
+    # str(value)
+    value = get_arg(ctx, "value")
+    return String(str(value))
+
+
+@register_function("bool", args=["value"])
+def bool_function(ctx: Context):
+    # bool(value)
+    value = get_arg(ctx, "value")
+    return Boolean(bool(value))
+
+
+@register_function("list", args=["value"])
+def list_function(ctx: Context):
+    # list(value)
+    value = get_arg(ctx, "value")
+    return List(list(value))
+
+
+@register_function("tuple", args=["value"])
+def tuple_function(ctx: Context):
+    # tuple(value)
+    value = get_arg(ctx, "value")
+    return Tuple(tuple(value))
+
+
+@register_function("len", args=["value"])
+def len_function(ctx: Context):
+    # len(value)
+    value = get_arg(ctx, "value")
+    return Integer(len(value))
+
+
+@register_function("random", args=["min", "max"])
+def random_function(ctx: Context):
+    # random(min, max)
+    min_ = get_arg(ctx, "min")
+    max_ = get_arg(ctx, "max")
+    return Integer(randint(min_, max_))
