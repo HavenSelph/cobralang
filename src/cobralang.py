@@ -92,7 +92,7 @@ else:
                     or (count_token(lexer.TokenKind.LeftBracket, tmp) > count_token(lexer.TokenKind.RightBracket, tmp))\
                     or (count_token(lexer.TokenKind.LeftBrace, tmp) > count_token(lexer.TokenKind.RightBrace, tmp)):
                 new = input("... ")
-                code += new
+                code += "\n" + new
                 if new == "":
                     break
                 tmp = lexer.Lexer(code).tokenize()
