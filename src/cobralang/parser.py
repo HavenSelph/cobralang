@@ -227,6 +227,27 @@ class Parser:
                 out = WhileStatement(condition, body)
                 self.logger.debug(f"Returning {out}")
                 return out
+            case lexer.TokenKind.For:
+                self.logger.debug("Parsing for statement")
+                self.advance()
+                names = []
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        names.append(self.parse_expression())
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                        else:
+                            break
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after for statement")
+                else:
+                    names.append(self.parse_atom())
+                self.consume(lexer.TokenKind.In, "Expected 'in' after for statement")
+                iterable = self.parse_expression()
+                self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after for statement")
+                body = nodes.StatementBlock(self.parse_block().statements)
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after for statement")
+                return ForStatement(names, iterable, body)
         return self.parse_assignment()
 
     def parse_assignment(self) -> Node:
