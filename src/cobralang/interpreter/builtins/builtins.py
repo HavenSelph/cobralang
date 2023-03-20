@@ -60,7 +60,8 @@ def dump_function(ctx: Context):
         if show_var:
             print(" " * space_count + "Variables: [\n" + "".join([f"{' ' * space_count}\t{name}={value}\n" for name, value in scope.variables.items()]) + " " * space_count + "]")
         if show_func:
-            print(" " * space_count + "Functions: [\n" + "".join([f"{' ' * space_count}\t{name}={value}\n" for name, value in scope.functions.items()]) + " " * space_count + "]")
+            functions = "\n".join([f"{' ' * space_count}\t{name}({value.posargs}, {value.varargs or 'Null'}, {value.kwargs}, {value.varkwargs or 'Null'}) {{\n" + "\n".join([' ' * (space_count+4) + statement.__repr__() for statement in value.body.statements]) + '\n' + ' ' * (space_count+2) + "}" for name, value in scope.functions.items()])
+            print(" " * space_count + "Functions: [\n" + functions + " " * space_count + "]")
         space_count += 2
 
 
