@@ -136,7 +136,7 @@ class Parser:
                         break
                 self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in 'fn' statement")
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after arguments in 'fn' statement")
-                body = nodes.FunctionBlock(self.parse_block().statements)
+                body = nodes.StatementBlock(self.parse_block().statements)
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after function body in 'fn' statement")
                 out = nodes.FunctionDefinition(nodes.Function(name, args, varargs, {k:v for k,v in kwargs}, varkwargs, body))
                 self.logger.debug(f"Returning {out}")

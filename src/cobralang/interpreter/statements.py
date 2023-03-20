@@ -1,6 +1,6 @@
 from .interpreter import Context, Node
 from .exceptions import ReturnException
-from .nodes import Block
+from .nodes import Block, StatementBlock, VariableDeclaration
 
 
 class ReturnStatement(Node):

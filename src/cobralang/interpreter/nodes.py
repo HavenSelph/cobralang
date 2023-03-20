@@ -103,7 +103,7 @@ class Block(Node):
             ctx.pop_scope()
 
 
-class FunctionBlock(Block):
+class StatementBlock(Block):
     def run(self, ctx: Context):
         out = Null()
         for statement in self.statements:
@@ -134,7 +134,7 @@ class Program(Block):
 
 
 class Function:
-    def __init__(self, name: str, posargs: list[str], varargs: str | None, kwargs: dict[str,Node], varkwargs: str | None, body: FunctionBlock):
+    def __init__(self, name: str, posargs: list[str], varargs: str | None, kwargs: dict[str,Node], varkwargs: str | None, body: StatementBlock):
         self.name = name
         self.posargs = posargs
         self.varargs = varargs

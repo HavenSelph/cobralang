@@ -1,4 +1,4 @@
-from ..nodes import Function, FunctionBlock
+from ..nodes import Function, StatementBlock
 from typing import Callable
 from ..datatypes import *
 from time import time
@@ -8,7 +8,7 @@ from random import randint
 std_functions = {}
 
 
-class BuiltInFunctionBlock(FunctionBlock):
+class BuiltInStatementBlock(StatementBlock):
     def __init__(self, function: Callable):
         self.function = function
         super().__init__([StringLiteral("<built-in function>")])
@@ -19,7 +19,7 @@ class BuiltInFunctionBlock(FunctionBlock):
 
 def register_function(name: str, args: list[str]=None, varargs: str | None=None, kwargs=None, varkwargs: str | None=None):
     def inner(func: Callable):
-        std_functions[name] = Function(name, args, varargs, kwargs, varkwargs, BuiltInFunctionBlock(func))
+        std_functions[name] = Function(name, args, varargs, kwargs, varkwargs, BuiltInStatementBlock(func))
         return func
     if args is None:
         args = []
