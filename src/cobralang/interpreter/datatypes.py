@@ -86,7 +86,6 @@ class DictionaryLiteral(Node):
         return f'{{{", ".join([str(i) for i in self.elements])}}}'
 
     def run(self, ctx: Context):
-        print(self.elements)
         return Dict({item[0].run(ctx): item[1].run(ctx) for item in self.elements})
 
 
