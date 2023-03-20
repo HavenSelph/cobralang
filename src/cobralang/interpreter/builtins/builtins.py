@@ -49,18 +49,18 @@ def exit_function(ctx: Context):
     exit(code)
 
 
-@register_function("dump", kwargs={"show_self": Boolean(False), "show_var": Boolean(True), "show_func": Boolean(True)})
+@register_function("dump", kwargs={"only_current": Boolean(False), "show_vars": Boolean(True), "show_funcs": Boolean(True)})
 def dump_function(ctx: Context):
-    # dump(all=True)
-    show_self = get_arg(ctx, "show_self")
-    show_var = get_arg(ctx, "show_var")
-    show_func = get_arg(ctx, "show_func")
+    # dump(only_current=False, show_vars=True, show_funcs=True)
+    only_current = get_arg(ctx, "only_current")
+    show_vars = get_arg(ctx, "show_vars")
+    show_funcs = get_arg(ctx, "show_funcs")
     space_count = 0
-    for scope in ctx.scopes if show_self else ctx.scopes[:-1]:
-        if show_var:
+    for scope in ctx.scopes if not only_current else (ctx.scopes[-2],):
+        if show_vars:
             print(" " * space_count + "Variables: [\n" + "".join([f"{' ' * space_count}\t{name}={value}\n" for name, value in scope.variables.items()]) + " " * space_count + "]")
-        if show_func:
-            functions = "\n".join([f"{' ' * space_count}\t{name}({value.posargs}, {value.varargs or 'Null'}, {value.kwargs}, {value.varkwargs or 'Null'}) {{\n" + "\n".join([' ' * (space_count+4) + statement.__repr__() for statement in value.body.statements]) + '\n' + ' ' * (space_count+2) + "}" for name, value in scope.functions.items()])
+        if show_funcs:
+            functions = "\n".join([f"{' ' * space_count}\t{name}({', '.join(value.posargs) or '_'}, {value.varargs or '_'}, {','.join([f'{k}={v!r}' for k, v in value.kwargs.items()]) or '_'}, {value.varkwargs or '_'}) {{\n" + "\n".join([' ' * (space_count+4) + statement.__repr__() for statement in value.body.statements]) + '\n' + ' ' * (space_count+2) + "}" for name, value in scope.functions.items()])
             print(" " * space_count + "Functions: [\n" + functions + " " * space_count + "]")
         space_count += 2
 
