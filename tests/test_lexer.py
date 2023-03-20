@@ -1,5 +1,6 @@
 import unittest
-from testing import lexer
+from src.cobralang import parser
+from src.cobralang import lexer
 
 
 def lex_then_unpack(text: str) -> list[tuple[lexer.TokenKind, str]]:
