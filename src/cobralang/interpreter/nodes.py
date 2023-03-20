@@ -208,3 +208,60 @@ class FunctionCall(Node):
         args = [arg.run(ctx) for arg in self.args]
         kwargs = {k: v.run(ctx) for k, v in self.kwargs.items()}
         return function.run(ctx, args, kwargs)
+
+
+class Import(Node):
+    def __init__(self, name: str, filename: str, program: Program):
+        self.name = name
+        self.filename = filename
+        self.program = program
+
+    def __repr__(self):
+        return f"Import({self.name})"
+
+    def run(self, ctx: Context):
+        self.program.run(ctx)
+
+
+class FromImportFn(Node):
+    def __init__(self, name: str, filename: str, program: Program, names: list[str]):
+        self.name = name
+        self.filename = filename
+        self.program = program
+        self.functions = names
+
+    def __repr__(self):
+        return f"FromImportFn({self.name}, {self.functions})"
+
+    def run(self, ctx: Context):
+        try:
+            ctx.push_scope()
+            self.program.run(ctx)
+            for name in self.functions:
+                ctx.scopes.scopes[-2].push_function(ctx.get_function(name))
+        except KeyError:
+            raise Exception(f"Function(s) not found in module {self.name}")
+        finally:
+            ctx.pop_scope()
+
+
+class FromImportVar(Node):
+    def __init__(self, name: str, filename: str, program: Program, names: list[str]):
+        self.name = name
+        self.filename = filename
+        self.program = program
+        self.variables = names
+
+    def __repr__(self):
+        return f"FromImportVar({self.name}, {self.variables})"
+
+    def run(self, ctx: Context):
+        try:
+            ctx.push_scope()
+            self.program.run(ctx)
+            for name in self.variables:
+                ctx.scopes.scopes[-2].variables[name] = ctx[name]
+        except KeyError:
+            raise Exception(f"Variable(s) not found in module {self.name} - {self.filename}")
+        finally:
+            ctx.pop_scope()
