@@ -210,19 +210,6 @@ class FunctionCall(Node):
         return function.run(ctx, args, kwargs)
 
 
-class Import(Node):
-    def __init__(self, name: str, filename: str, program: Program):
-        self.name = name
-        self.filename = filename
-        self.program = program
-
-    def __repr__(self):
-        return f"Import({self.name})"
-
-    def run(self, ctx: Context):
-        self.program.run(ctx)
-
-
 class FromImportFn(Node):
     def __init__(self, name: str, filename: str, program: Program, names: list[str]):
         self.name = name
