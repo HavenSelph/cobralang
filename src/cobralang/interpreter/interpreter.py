@@ -15,8 +15,11 @@ class Context:
         self.scopes = [Scope()]
         self.register_builtins()
 
-    def clear_scopes(self):
-        self.scopes = [Scope()]
+    def clear_scopes(self, keep_globals=True, keep_functions=True):
+        for scope in self.scopes[1:] if keep_globals else self.scopes:
+            scope.variables = {}
+            if not keep_functions:
+                scope.functions = {}
         self.register_builtins()
 
     def register_builtins(self):
