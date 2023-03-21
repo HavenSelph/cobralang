@@ -98,10 +98,12 @@ class TokenKind(Enum):
 
     # Statements
     Import = auto()
+    From = auto()
     Return = auto()
     Break = auto()
     Let = auto()
     Fn = auto()
+    Var = auto()
     For = auto()
 
     # Blocks
@@ -127,10 +129,12 @@ keywords = {
 
     # statements
     "import": TokenKind.Import,
+    "from": TokenKind.From,
     "return": TokenKind.Return,
     "break": TokenKind.Break,
     "let": TokenKind.Let,
     "fn": TokenKind.Fn,
+    "var": TokenKind.Var,
 
     # blocks
     "if": TokenKind.If,
