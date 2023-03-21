@@ -56,12 +56,12 @@ def dump_function(ctx: Context):
     show_vars = get_arg(ctx, "show_vars")
     show_funcs = get_arg(ctx, "show_funcs")
     space_count = 0
-    for scope in ctx.scopes if not only_current else (ctx.scopes[-2],):
+    for scope in ctx.scopes[:-1] if not only_current else (ctx.scopes[-2],):
         if show_vars:
             print(" " * space_count + "Variables: [\n" + "".join([f"{' ' * space_count}\t{name}={value}\n" for name, value in scope.variables.items()]) + " " * space_count + "]")
         if show_funcs:
             functions = "\n".join([f"{' ' * space_count}\t{name}({', '.join(value.posargs) or '_'}, {value.varargs or '_'}, {','.join([f'{k}={v!r}' for k, v in value.kwargs.items()]) or '_'}, {value.varkwargs or '_'}) {{\n" + "\n".join([' ' * (space_count+4) + statement.__repr__() for statement in value.body.statements]) + '\n' + ' ' * (space_count+2) + "}" for name, value in scope.functions.items()])
-            print(" " * space_count + "Functions: [\n" + functions + " " * space_count + "]")
+            print(" " * space_count + "Functions: [\n" + functions + "\n" + " " * space_count + "]")
         space_count += 2
 
 
