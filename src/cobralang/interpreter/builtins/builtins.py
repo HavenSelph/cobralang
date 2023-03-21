@@ -65,13 +65,12 @@ def dump_function(ctx: Context):
         space_count += 2
 
 
-@register_function("clear", kwargs={"keep_globals": Boolean(False), "keep_functions": Boolean(False)})
+@register_function("clear", kwargs={"keep_functions": Boolean(False), "no_warning": Boolean(False)})
 def clear_function(ctx: Context):
-    # clear(keep_globals=False, keep_functions=False)
-    keep_globals = get_arg(ctx, "keep_globals")
+    # clear(keep_functions=False, no_warning=False)
     keep_functions = get_arg(ctx, "keep_functions")
-    ctx.clear_scopes(keep_globals, keep_functions)
-
+    no_warning = get_arg(ctx, "no_warning")
+    ctx.clear_context(keep_functions, no_warning)
 
 @register_function("time", kwargs={"as_int": Boolean(False)})
 def time_function(ctx: Context):

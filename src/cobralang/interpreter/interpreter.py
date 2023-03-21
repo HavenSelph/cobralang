@@ -15,17 +15,19 @@ class Context:
         self.scopes = [Scope()]
         self.register_builtins()
 
-    def clear_scopes(self, keep_globals=True, keep_functions=True):
-        for scope in self.scopes[1:] if keep_globals else self.scopes:
+    def clear_context(self, keep_functions=True, no_warning=False):
+        if not no_warning and len(self.scopes) > 2:
+            print("Warning: Clearing context within higher scopes can cause side effects, use with caution.")
+        for scope in self.scopes:
             scope.variables = {}
             if not keep_functions:
-                scope.functions = {}
+                self.scopes[0].functions = {}
         self.register_builtins()
 
     def register_builtins(self):
         from .builtins import std_functions
         for name, function in std_functions.items():
-            self.push_function(name, function)
+            self.scopes[0].functions[name] = function
 
     def push_scope(self):
         self.scopes.append(Scope())
