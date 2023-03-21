@@ -225,7 +225,7 @@ class FromImportFn(Node):
             ctx.push_scope()
             self.program.run(ctx)
             for name in self.functions:
-                ctx.scopes.scopes[-2].push_function(ctx.get_function(name))
+                ctx.scopes[-2].functions[name] = ctx.get_function(name)
         except KeyError:
             raise Exception(f"Function(s) not found in module {self.name}")
         finally:
@@ -247,7 +247,7 @@ class FromImportVar(Node):
             ctx.push_scope()
             self.program.run(ctx)
             for name in self.variables:
-                ctx.scopes.scopes[-2].variables[name] = ctx[name]
+                ctx.scopes[-2].variables[name] = ctx[name]
         except KeyError:
             raise Exception(f"Variable(s) not found in module {self.name} - {self.filename}")
         finally:
