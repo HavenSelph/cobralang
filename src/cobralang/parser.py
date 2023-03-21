@@ -60,7 +60,7 @@ class Parser:
         else:
             raise SyntaxError(f"{error_message}: {self.current_token} is not {kind}")
 
-    def parse(self) -> Node:
+    def parse(self) -> nodes.Program:
         return self.parse_program()
 
     def parse_program(self) -> nodes.Program:
@@ -145,14 +145,13 @@ class Parser:
                 self.logger.debug("Parsing import statement")
                 self.advance()
                 from pathlib import Path
-                if self.current_token.value in all_builtins:
+                if self.current_token is not None and self.current_token.value in all_builtins:
                     name = all_builtins[self.current_token.value]
-                else:
-                    name = self.current_token.value
-                    if name[-3:] != ".cb":
-                        name += ".cb"
-                        name = "./"+name
+                elif self.current_token is not None:
+                    name = "./" + self.current_token.value + ".cb"
                     self.logger.debug(f"Attempting to locate file {name}")
+                else:  # included so type hinting doesn't complain, will never use this value of name
+                    name = None
                 self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
                 path = Path(name).absolute()
                 if not path.exists():
@@ -169,6 +168,48 @@ class Parser:
                 self.advance(0)
                 self.logger.debug(f"File {name} added to token list")
                 return self.parse_statement()
+            case lexer.TokenKind.From:
+                self.logger.debug("Parsing from statement")
+                self.advance()
+                from pathlib import Path
+                name = self.current_token.value
+                module = self.current_token.value
+                if module in all_builtins:
+                    module = all_builtins[self.current_token.value]
+                elif self.current_token is not None:
+                    module = "./" + self.current_token.value + ".cb"
+                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'from' statement")
+                self.logger.debug(f"Attempting to locate file {module}")
+                path = Path(module).absolute()
+                self.consume(lexer.TokenKind.Import, "Expected 'import' after 'from' statement")
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Fn:
+                    func = True
+                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.Var:
+                    func = False
+                else:
+                    raise SyntaxError(f"Unexpected token {self.current_token} after 'from' statement")
+                self.advance()
+                names = []
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        names.append(self.parse_expression().name)
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                        else:
+                            break
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after from statement")
+                else:
+                    names.append(self.parse_atom().name)
+                with open(path, "r") as f:
+                    code = f.read()
+                tokens = lexer.Lexer(code, filename=f"<{module}>", logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file).tokenize()
+                program = Parser(tokens, logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file).parse()
+                if func:
+                    out = nodes.FromImportFn(name, module, program, names)
+                else:
+                    out = nodes.FromImportVar(name, module, program, names)
+                return out
             # case lexer.TokenKind.Print:
             #     self.logger.debug("Parsing print statement")
             #     self.advance()
