@@ -16,8 +16,8 @@ class BuiltInStatementBlock(StatementBlock):
     def __init__(self, function: Callable):
         self.function = function
         if function.__doc__ is not None:
-            self.doc = function.__doc__
-            super().__init__([StringLiteral(function.__doc__), StringLiteral("<built-in>")])
+            self.doc = "\n".join([ln.strip() for ln in function.__doc__.strip().splitlines()])
+            super().__init__([StringLiteral(self.doc), StringLiteral("<built-in>")])
         else:
             self.doc = "No documentation available for this function."
             # noinspection PyTypeChecker
