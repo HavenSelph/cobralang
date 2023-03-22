@@ -265,14 +265,14 @@ class Help(Node):
     def run(self, ctx: Context):
         try:
             if self.name is None:
-                return String("Call help with a function name to get documentation on that function.")
+                return String("Call help with a function name to get documentation on that function.\nUsage: help(dump) or help(choice)")
             if self.name == "help":
                 return String("maximum recursion depth exceeded :)")
             func = ctx.get_function(self.name)
             if len(func.body.statements) < 1:
-                return String(f"Function {self.name} has no documentation.")
+                return String(f"Function {self.name}() has no documentation.")
             if not isinstance(func.body.statements[0], StringLiteral):
-                return String(f"Function {self.name} has no documentation.")
-            return func.body.statements[0].run(ctx)
+                return String(f"Function {self.name}() has no documentation.")
+            return String(f"Function {self.name}() documentation:\n") + func.body.statements[0].run(ctx)
         except KeyError:
             raise Exception(f"Function {self.name} not found")
