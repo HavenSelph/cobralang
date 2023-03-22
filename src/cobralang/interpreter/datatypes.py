@@ -438,6 +438,20 @@ class Null(Value):
 
 class Slice(Value):
     def __init__(self, start: Value, stop: Value):
+        match start:
+            case Integer():
+                start = start.value
+            case Null():
+                start = 0
+            case _:
+                start = start
+        match stop:
+            case Integer():
+                stop = stop.value
+            case Null():
+                stop = -1
+            case _:
+                stop = stop
         super().__init__(value=slice(start.value, stop.value))
 
     def __repr__(self):
