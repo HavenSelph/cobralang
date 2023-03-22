@@ -47,7 +47,7 @@ Hello, World!
 ```
 
 # Examples
-There are a few examples in the `examples` directory. These are just some simple scripts that demonstrate some of Cobra's features. The following is not an exhaustive list of Cobra's features, but it should give you a good idea of what Cobra can do. (Unfortunately, Cobra doesn't have proper syntax highlighting in markdown, so the codeblock won't highlight multiline comments. Sorry about that.)
+There are a few examples in the `examples` directory. These are just some simple scripts that demonstrate some of Cobra's features. The following is not an exhaustive list of Cobra's features, but it should give you a good idea of what Cobra can do.
 ```shell
 # Cobra can have comments that look like Python's
 let x = 10 # Variables must be declared with the 'let' keyword
