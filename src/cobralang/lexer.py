@@ -394,8 +394,14 @@ class Lexer:
                     self.logger.debug("Found quote, parsing string literal")
                     start = self.position
                     value = ""
+                    multi_line = False
                     self.advance()
-                    while self.current_char is not None and (self.current_char != char or self.current_char == "\n"):
+                    if self.current_char == "*":
+                        multi_line = True
+                        self.advance()
+                        if self.current_char == "\n":
+                            self.advance()
+                    while self.current_char is not None and self.current_char != char:
                         if self.current_char == "\\":
                             self.advance()
                             if self.current_char == "n":
@@ -406,6 +412,14 @@ class Lexer:
                                 value += char
                             else:
                                 value += "\\" + self.current_char
+                        elif self.current_char == '*' and multi_line:
+                            self.advance()
+                            if self.current_char != char:
+                                value += "*"
+                            else:
+                                break
+                        elif self.current_char == "\n" and not multi_line:
+                            break
                         else:
                             value += self.current_char
                         self.advance()
