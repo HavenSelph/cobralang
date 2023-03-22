@@ -1,42 +1,110 @@
 # This code is licensed under the MIT License (see LICENSE file for details)
 # MATH FUNCTIONS AND VARS
 fn add(a, b) {
+    "*
+    Adds two numbers together and returns the result.
+
+    a: The first number to add.
+    b: The second number to add.
+    *"
     a + b
 }
 fn sub(a, b) {
+    "*
+    Subtracts two numbers and returns the result.
+
+    a: The first number to subtract.
+    b: The second number to subtract.
+    *"
     a - b
 }
 fn mul(a, b) {
+    "*
+    Multiplies two numbers and returns the result.
+
+    a: The first number to multiply.
+    b: The second number to multiply.
+    *"
     a * b
 }
 fn div(a, b) {
+    "*
+    Divides two numbers and returns the result.
+
+    a: The first number to divide.
+    b: The second number to divide.
+    *"
     a / b
 }
 fn mod(a, b) {
+    "*
+    Returns the remainder of a division.
+
+    a: The first number to divide.
+    b: The second number to divide.
+    *"
     a % b
 }
 fn floor(a) {
+    "*
+    Returns the largest integer less than or equal to a number.
+
+    a: The number to floor.
+    *"
     a // 1
 }
 fn floordiv(a, b) {
+    "*
+    Returns the largest integer less than or equal to the quotient of two numbers.
+
+    a: The first number to divide.
+    b: The second number to divide.
+    *"
     a // b
 }
 fn ceil(a) {
+    "*
+    Returns the smallest integer greater than or equal to a number.
+
+    a: The number to ceil.
+    *"
     a // 1 + 1
 }
 fn pow(a, b) {
+    "*
+    Returns the result of a number raised to a power.
+
+    a: The number to raise.
+    b: The power to raise the number to.
+    *"
     a**b
 }
 
 fn sqrt(a) {
+    "*
+    Returns the square root of a number.
+
+    a: The number to find the square root of.
+    *"
     a**0.5
 }
 
 fn log(a, b) {
+    "*
+    Returns the logarithm of a number.
+
+    a: The number to find the logarithm of.
+    b: The base of the logarithm.
+    *"
     ln(a) / ln(b)
 }
 
 fn ln(a) {
+    "*
+    Returns the natural logarithm of a number.
+
+    a: The number to find the natural logarithm of.
+    *"
     let x = 1.0
     let y = 0.0
     let i = 0
@@ -59,6 +127,11 @@ let sqrt3 = sqrt(3)
 
 # TRIGONOMETRY
 fn sin(a) {
+    "*
+    Returns the sine of an angle.
+
+    a: The angle to find the sine of.
+    *"
     a = a % tau
     let x = a
     let y = 0.0
@@ -72,6 +145,11 @@ fn sin(a) {
 }
 
 fn cos(a) {
+    "*
+    Returns the cosine of an angle.
+
+    a: The angle to find the cosine of.
+    *"
     a = a % tau
     let x = 1.0
     let y = 0.0
@@ -85,10 +163,20 @@ fn cos(a) {
 }
 
 fn tan(a) {
+    "*
+    Returns the tangent of an angle.
+
+    a: The angle to find the tangent of.
+    *"
     sin(a) / cos(a)
 }
 
 fn asin(a) {
+    "*
+    Returns the arc sine of a number.
+
+    a: The number to find the arc sine of.
+    *"
     let x = a
     let y = 0.0
     let i = 0
@@ -101,10 +189,20 @@ fn asin(a) {
 }
 
 fn acos(a) {
+    "*
+    Returns the arc cosine of a number.
+
+    a: The number to find the arc cosine of.
+    *"
     pi / 2 - asin(a)
 }
 
 fn atan(a) {
+    "*
+    Returns the arc tangent of a number.
+
+    a: The number to find the arc tangent of.
+    *"
     let x = a
     let y = 0.0
     let i = 0

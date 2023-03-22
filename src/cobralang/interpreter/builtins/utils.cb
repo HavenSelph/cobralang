@@ -1,5 +1,11 @@
 # This code is licensed under the MIT License (see LICENSE file for details)
 fn join(val, list) {
+    "*
+    Joins a list of strings together with a given value.
+
+    val: The value to join the list with.
+    list: The list of strings to join.
+    *"
     if (len(list) == 0) {
         return ""
     }
@@ -13,6 +19,12 @@ fn join(val, list) {
 }
 
 fn split(val, str) {
+    "*
+    Splits a string into a list of strings based on a given value.
+
+    val: The value to split the string on.
+    str: The string to split.
+    *"
     let list = []
     let start = 0
     let i = 0
@@ -28,6 +40,11 @@ fn split(val, str) {
 }
 
 fn sort(list) {
+    "*
+    Sorts a list of numbers.
+
+    list: The list of numbers to sort.
+    *"
     let i = 0
     while (i < len(list)) {
         let j = i + 1
@@ -44,7 +61,31 @@ fn sort(list) {
     return list
 }
 
+fn step(list, step) {
+    "*
+    Returns a list of every nth element in a list.
+
+    list: The list to step through.
+    step: The number of elements to skip.
+    *"
+    if len(list) % step != 0 {
+        for (z, i) in (1,) {}  # raise error if step is not valid by forcing for loop to attempt to iterate over an invalid range
+    }
+    let i = 0
+    let new_list = []
+    while (i < len(list)) {
+        append(new_list, list[i])
+        i += step
+    }
+    return new_list
+}
+
 fn sum(list) {
+    "*
+    Returns the sum of a list of numbers.
+
+    list: The list of numbers to sum.
+    *"
     let i = 0
     let total = 0
     while (i < len(list)) {
@@ -55,6 +96,11 @@ fn sum(list) {
 }
 
 fn reverse(list) {
+    "*
+    Reverses a list.
+
+    list: The list to reverse.
+    *"
     let i = 0
     let j = len(list) - 1
     while (i < j) {
@@ -68,6 +114,12 @@ fn reverse(list) {
 }
 
 fn enumerate(list, start) {
+    "*
+    Returns a list of tuples containing the index and value of each element in a list.
+
+    list: The list to enumerate.
+    start: The starting index.
+    *"
     let i = 0
     let new_list = []
     while (i < len(list)) {
