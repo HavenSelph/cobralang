@@ -6,6 +6,7 @@ import inspect
 from time import time
 from random import randint
 from pathlib import Path
+from src import __version__, __author__, __repo__, __license__
 
 
 std_functions = {}
@@ -437,3 +438,12 @@ def license_function():
     with open(path, "r") as f:
         text = f.read()
     print(text.replace("[Learn what this license permits you to do](https://choosealicense.com/licenses/mit/)", "https://choosealicense.com/licenses/mit/").replace("> ", ""))
+
+
+@register_auto
+def info_function():
+    """
+    Get information about the language.
+    """
+
+    print(f"CobraLang (v{__version__}) Licensed under {__license__} license, type license() for more info.\nMade by {__author__}, find the source code at: {__repo__}\nType 'exit()' to exit, 'clear()' to clear the context, help() for help.")
