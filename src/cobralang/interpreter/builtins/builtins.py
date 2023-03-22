@@ -106,7 +106,7 @@ def type_of(item):
 
 
 def get_arg(ctx: Context, name: str, value_of=True):
-    return ctx[name].value if value_of else ctx[name]
+    return auto_cast_param(ctx[name]) if value_of else ctx[name]
 
 
 def auto_cast(value):
@@ -125,12 +125,34 @@ def auto_cast(value):
             return Dict({auto_cast(k): auto_cast(v) for k, v in value.items()})
         case tuple():
             return Tuple(tuple(auto_cast(x) for x in value))
-        case None:
+        case x if x is None:
             return Null()
         case x if isinstance(x, Node):
             return value
         case _:
             raise Exception(f"Unsupported value for auto_cast: {value}")
+
+
+def auto_cast_param(value):
+    match value:
+        case Integer():
+            return int(value.value)
+        case Float():
+            return float(value.value)
+        case String():
+            return str(value.value)
+        case Boolean():
+            return bool(value.value)
+        case List():
+            return [auto_cast_param(x.value) for x in value]
+        case Tuple():
+            return tuple(auto_cast_param(x.value) for x in value)
+        case Dict():
+            return {auto_cast_param(k.value): auto_cast_param(v.value) for k, v in value.value.items()}
+        case Null():
+            return None
+        case _:
+            raise Exception(f"Unsupported value for auto_cast_param: {type_of(value)}")
 
 
 @register_auto
@@ -160,11 +182,13 @@ def exit_function(code=0):
 @register_auto
 def dump_function(ctx: Context, only_current=False, show_vars=True, show_funcs=True, show_doc=True, show_builtins=True):
     """
-    Dump the current context.
+    Dump the current context, nicely formatted, to the console.
 
     only_current: Whether to only dump the current scope.
     show_vars: Whether to show the variables.
     show_funcs: Whether to show the functions.
+    show_doc: Whether to show the docstrings.
+    show_builtins: Whether to show the built-in functions.
     """
     space_count = 0
     for scope in ctx.scopes[:-1] if not only_current else (ctx.scopes[-2],):
@@ -176,7 +200,7 @@ def dump_function(ctx: Context, only_current=False, show_vars=True, show_funcs=T
                 if isinstance(value.body, BuiltInStatementBlock) and not show_builtins:
                     continue
                 func = f"{name}({', '.join(value.posargs) or '_'}, {value.varargs or '_'}, {','.join([f'{k}={v!r}' for k, v in value.kwargs.items()]) or '_'}, {value.varkwargs or '_'})"
-                funcs.append(" " * (space_count + 2) + f"{'<built-in>' if isinstance(value.body, BuiltInStatementBlock) else ''} {func}")
+                funcs.append("\n\u001b[34m" + " " * (space_count + 2) + f"{'<built-in>' if isinstance(value.body, BuiltInStatementBlock) else ''} {func} \u001b[0m")
                 if not show_doc:
                     continue
                 if isinstance(value.body.statements[0], StringLiteral):
@@ -195,9 +219,23 @@ def dump_function(ctx: Context, only_current=False, show_vars=True, show_funcs=T
 
 
 @register_auto
+def funcs_function(ctx: Context, only_current=False, show_doc=True):
+    """
+    Show all functions in the current context.
+
+    only_current: Whether to only dump the current scope.
+    show_doc: Whether to show the documentation.
+    """
+    dump_function(ctx, only_current, False, True, show_doc, True)
+
+
+@register_auto
 def my_funcs(ctx: Context, only_current=False, show_doc=True):
     """
-    Get all functions in the current context.
+    Get all non-built-in functions in the current context.
+
+    only_current: Whether to only dump the current scope.
+    show_doc: Whether to show the documentation.
     """
     dump_function(ctx, only_current, False, True, show_doc, False)
 
@@ -205,7 +243,7 @@ def my_funcs(ctx: Context, only_current=False, show_doc=True):
 @register_auto
 def clear_function(ctx: Context, keep_functions=False, no_warning=False):
     """
-    Dump the current context.
+    Clear the current context.
 
     keep_functions: Whether to keep the functions.
     no_warning: Whether to show a warning.
@@ -221,8 +259,8 @@ def time_function(as_int=False):
     as_int: Whether to return the time as an integer.
     """
     if as_int:
-        return Float(time())
-    return Integer(int(time()))
+        return time()
+    return int(time())
 
 
 @register_auto
@@ -234,7 +272,7 @@ def get_variables_function(ctx: Context):
     for scope in ctx.scopes:
         for name, value in scope.variables.items():
             variables[name] = value
-    return Tuple(tuple(variables.keys()))
+    return tuple(variables.keys())
 
 
 @register_auto
@@ -256,7 +294,7 @@ def get_functions_function(ctx: Context):
     for scope in ctx.scopes:
         for name, value in scope.functions.items():
             functions[name] = value
-    return Tuple(tuple(functions.keys()))
+    return tuple(functions.keys())
 
 
 @register_auto
@@ -288,7 +326,7 @@ def input_function(prompt=""):
 
     prompt: The prompt to show the user.
     """
-    return String(input(prompt))
+    return input(prompt)
 
 
 @register_auto
