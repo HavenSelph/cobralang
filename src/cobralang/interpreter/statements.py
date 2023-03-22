@@ -1,6 +1,7 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from .interpreter import Context, Node
 from .exceptions import ReturnException
-from .nodes import Block
+from .nodes import Block, StatementBlock, VariableDeclaration
 
 
 class ReturnStatement(Node):
@@ -41,3 +42,29 @@ class WhileStatement(Node):
         while self.condition.run(ctx):
             out = self.body.run(ctx)
         return out
+
+
+class ForStatement(Node):
+    def __init__(self, variables: list[Node], iterable: Node, body: StatementBlock):
+        self.variables = variables
+        self.iterable = iterable
+        self.body = body
+
+    def __repr__(self):
+        return f"for {self.variables} in {self.iterable} {self.body}"
+
+    def run(self, ctx: Context):
+        i = 0
+        iterable = self.iterable.run(ctx)
+        iter_len = len(iterable)
+        if iter_len % len(self.variables) != 0:
+            raise Exception("Iterable length must be divisible by the number of variables")
+        ctx.push_scope()
+        try:
+            while i < iter_len:
+                for k in range(len(self.variables)):
+                    ctx.current_scope().variables[self.variables[k].name] = iterable.value[i + k]
+                i += len(self.variables)
+                self.body.run(ctx)
+        finally:
+            ctx.pop_scope()

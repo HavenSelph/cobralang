@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -98,10 +99,12 @@ class TokenKind(Enum):
 
     # Statements
     Import = auto()
+    From = auto()
     Return = auto()
     Break = auto()
     Let = auto()
     Fn = auto()
+    Var = auto()
     For = auto()
 
     # Blocks
@@ -127,10 +130,12 @@ keywords = {
 
     # statements
     "import": TokenKind.Import,
+    "from": TokenKind.From,
     "return": TokenKind.Return,
     "break": TokenKind.Break,
     "let": TokenKind.Let,
     "fn": TokenKind.Fn,
+    "var": TokenKind.Var,
 
     # blocks
     "if": TokenKind.If,
@@ -389,18 +394,34 @@ class Lexer:
                     self.logger.debug("Found quote, parsing string literal")
                     start = self.position
                     value = ""
+                    multi_line = False
                     self.advance()
-                    while self.current_char is not None and (self.current_char != char or self.current_char == "\n"):
+                    if self.current_char == "*":
+                        multi_line = True
+                        self.advance()
+                        if self.current_char == "\n":
+                            self.advance()
+                    while self.current_char is not None and self.current_char != char:
                         if self.current_char == "\\":
                             self.advance()
                             if self.current_char == "n":
                                 value += "\n"
                             elif self.current_char == "t":
                                 value += "\t"
+                            elif self.current_char == "\\":
+                                value += "\\"
                             elif self.current_char == char:
                                 value += char
                             else:
                                 value += "\\" + self.current_char
+                        elif self.current_char == '*' and multi_line:
+                            self.advance()
+                            if self.current_char != char:
+                                value += "*"
+                            else:
+                                break
+                        elif self.current_char == "\n" and not multi_line:
+                            break
                         else:
                             value += self.current_char
                         self.advance()
@@ -408,6 +429,8 @@ class Lexer:
                         self.logger.error(f"Unterminated string literal at {start}")
                         raise InvalidStringError(f"Unterminated string literal at {start}", start, self.position)
                     self.advance()
+                    if multi_line:
+                        value = "\n".join([ln.strip() for ln in value.splitlines()])
                     push_token(TokenKind.StringLiteral, value, start)
                 case char:
                     self.logger.error(f"Illegal character '{char}' at {self.position}")

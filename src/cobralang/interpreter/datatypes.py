@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from .interpreter import Context, Node
 
 
@@ -68,7 +69,7 @@ class ListLiteral(Node):
 
 
 class TupleLiteral(Node):
-    def __init__(self, elements: list):
+    def __init__(self, elements: tuple):
         self.elements = elements
 
     def __repr__(self):
@@ -199,10 +200,13 @@ class Dict(Value):
         return len(self.value) != 0
 
     def __getitem__(self, item: Value):
-        return self.value[item.value]
+        try:
+            return self.value[item]
+        except KeyError as e:
+            raise KeyError(f'Key {item} not found in dictionary') from e
 
     def __setitem__(self, key: Value, value: Value):
-        self.value[key.value] = value
+        self.value[key] = value
 
     def __len__(self):
         return len(self.value)
@@ -362,13 +366,13 @@ class String(Value):
         return self.value.__repr__()
 
     def __str__(self):
-        return self.value
+        return String(self.value)
 
     def __bool__(self):
-        return self.value!=""
+        return Boolean(self.value!="")
 
     def __len__(self):
-        return len(self.value)
+        return Integer(len(self.value))
 
     def __getitem__(self, item: Value):
         return String(self.value[item.value])
@@ -434,6 +438,20 @@ class Null(Value):
 
 class Slice(Value):
     def __init__(self, start: Value, stop: Value):
+        match start:
+            case Integer():
+                start = start.value
+            case Null():
+                start = 0
+            case _:
+                start = start
+        match stop:
+            case Integer():
+                stop = stop.value
+            case Null():
+                stop = -1
+            case _:
+                stop = stop
         super().__init__(value=slice(start.value, stop.value))
 
     def __repr__(self):

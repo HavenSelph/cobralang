@@ -1,7 +1,8 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from __future__ import annotations
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import Value, Null, Dict, Tuple
+from .datatypes import Value, Null, Dict, Tuple, String, StringLiteral
 
 
 class VariableReference(Node):
@@ -103,7 +104,7 @@ class Block(Node):
             ctx.pop_scope()
 
 
-class FunctionBlock(Block):
+class StatementBlock(Block):
     def run(self, ctx: Context):
         out = Null()
         for statement in self.statements:
@@ -134,7 +135,7 @@ class Program(Block):
 
 
 class Function:
-    def __init__(self, name: str, posargs: list[str], varargs: str | None, kwargs: dict[str,Node], varkwargs: str | None, body: FunctionBlock):
+    def __init__(self, name: str, posargs: list[str], varargs: str | None, kwargs: dict[str,Node], varkwargs: str | None, body: StatementBlock):
         self.name = name
         self.posargs = posargs
         self.varargs = varargs
@@ -208,3 +209,70 @@ class FunctionCall(Node):
         args = [arg.run(ctx) for arg in self.args]
         kwargs = {k: v.run(ctx) for k, v in self.kwargs.items()}
         return function.run(ctx, args, kwargs)
+
+
+class FromImportFn(Node):
+    def __init__(self, name: str, filename: str, program: Program, names: list[str]):
+        self.name = name
+        self.filename = filename
+        self.program = program
+        self.functions = names
+
+    def __repr__(self):
+        return f"FromImportFn({self.name}, {self.functions})"
+
+    def run(self, ctx: Context):
+        try:
+            ctx.push_scope()
+            self.program.run(ctx)
+            for name in self.functions:
+                ctx.scopes[-2].functions[name] = ctx.get_function(name)
+        except KeyError:
+            raise Exception(f"Function(s) not found in module {self.name}")
+        finally:
+            ctx.pop_scope()
+
+
+class FromImportVar(Node):
+    def __init__(self, name: str, filename: str, program: Program, names: list[str]):
+        self.name = name
+        self.filename = filename
+        self.program = program
+        self.variables = names
+
+    def __repr__(self):
+        return f"FromImportVar({self.name}, {self.variables})"
+
+    def run(self, ctx: Context):
+        try:
+            ctx.push_scope()
+            self.program.run(ctx)
+            for name in self.variables:
+                ctx.scopes[-2].variables[name] = ctx[name]
+        except KeyError:
+            raise Exception(f"Variable(s) not found in module {self.name} - {self.filename}")
+        finally:
+            ctx.pop_scope()
+
+
+class Help(Node):
+    def __init__(self, name: str):
+        self.name = name
+
+    def __repr__(self):
+        return f"Help({self.name})"
+
+    def run(self, ctx: Context):
+        try:
+            if self.name is None:
+                return String("Call help with a function name to get documentation on that function.\nUsage: help(dump) or help(choice)")
+            if self.name == "help":
+                return String("maximum recursion depth exceeded :)")
+            func = ctx.get_function(self.name)
+            if len(func.body.statements) < 1:
+                return String(f"Function {self.name}() has no documentation.")
+            if not isinstance(func.body.statements[0], StringLiteral):
+                return String(f"Function {self.name}() has no documentation.")
+            return String(f"Function {self.name}() documentation:\n") + func.body.statements[0].run(ctx)
+        except KeyError:
+            raise Exception(f"Function {self.name} not found")

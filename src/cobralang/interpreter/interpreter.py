@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from abc import ABC, abstractmethod
 
 
@@ -15,14 +16,19 @@ class Context:
         self.scopes = [Scope()]
         self.register_builtins()
 
-    def clear_scopes(self):
-        self.scopes = [Scope()]
+    def clear_context(self, keep_functions=True, no_warning=False):
+        if not no_warning and len(self.scopes) > 2:
+            print("Warning: Clearing context within higher scopes can cause side effects, use with caution.")
+        for scope in self.scopes:
+            scope.variables = {}
+            if not keep_functions:
+                self.scopes[0].functions = {}
         self.register_builtins()
 
     def register_builtins(self):
         from .builtins import std_functions
         for name, function in std_functions.items():
-            self.push_function(name, function)
+            self.scopes[0].functions[name] = function
 
     def push_scope(self):
         self.scopes.append(Scope())

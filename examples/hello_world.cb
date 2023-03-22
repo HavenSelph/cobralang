@@ -1,0 +1,5 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+print("Hello world!")
+let x = "Hello"
+let y = "world"
+print(x, y, sep=" ", end="!\n")

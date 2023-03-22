@@ -1,0 +1,22 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+
+"*
+Conditionals in Cobra are similar to those in Python. You can use or, and, not, and in and even the single character
+representations of these operators.
+
+The following code is a simple example of a conditional statement in Cobra:
+*"
+let x = 1
+
+if x > 1 {
+    # the condition does not have to be in parentheses
+    print("x is positive")
+} elif (x < -1) {
+    # but it can be
+    print("x is negative")
+} elif (x ==0) | (x==1) {
+    # you can use the or operator
+    print("x is either zero or one")
+} else {
+    print("x is zero")
+}

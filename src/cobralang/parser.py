@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from . import lexer
 from .interpreter.datatypes import *
 from .interpreter.statements import *
@@ -56,11 +57,13 @@ class Parser:
 
     def consume(self, kind: lexer.TokenKind, error_message: str="Unexpected token"):
         if self.current_token is not None and self.current_token.kind == kind:
+            out = self.current_token
             self.advance()
+            return out
         else:
             raise SyntaxError(f"{error_message}: {self.current_token} is not {kind}")
 
-    def parse(self) -> Node:
+    def parse(self) -> nodes.Program:
         return self.parse_program()
 
     def parse_program(self) -> nodes.Program:
@@ -136,7 +139,7 @@ class Parser:
                         break
                 self.consume(lexer.TokenKind.RightParen, "Expected ')' after arguments in 'fn' statement")
                 self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after arguments in 'fn' statement")
-                body = nodes.FunctionBlock(self.parse_block().statements)
+                body = nodes.StatementBlock(self.parse_block().statements)
                 self.consume(lexer.TokenKind.RightBrace, "Expected '}' after function body in 'fn' statement")
                 out = nodes.FunctionDefinition(nodes.Function(name, args, varargs, {k:v for k,v in kwargs}, varkwargs, body))
                 self.logger.debug(f"Returning {out}")
@@ -145,14 +148,13 @@ class Parser:
                 self.logger.debug("Parsing import statement")
                 self.advance()
                 from pathlib import Path
-                if self.current_token.value in all_builtins:
+                if self.current_token is not None and self.current_token.value in all_builtins:
                     name = all_builtins[self.current_token.value]
-                else:
-                    name = self.current_token.value
-                    if name[-3:] != ".cb":
-                        name += ".cb"
-                        name = "./"+name
+                elif self.current_token is not None:
+                    name = "./" + self.current_token.value + ".cb"
                     self.logger.debug(f"Attempting to locate file {name}")
+                else:  # included so type hinting doesn't complain, will never use this value of name
+                    name = None
                 self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'import' statement")
                 path = Path(name).absolute()
                 if not path.exists():
@@ -169,6 +171,48 @@ class Parser:
                 self.advance(0)
                 self.logger.debug(f"File {name} added to token list")
                 return self.parse_statement()
+            case lexer.TokenKind.From:
+                self.logger.debug("Parsing from statement")
+                self.advance()
+                from pathlib import Path
+                name = self.current_token.value
+                module = self.current_token.value
+                if module in all_builtins:
+                    module = all_builtins[self.current_token.value]
+                elif self.current_token is not None:
+                    module = "./" + self.current_token.value + ".cb"
+                self.consume(lexer.TokenKind.Identifier, "Expected identifier after 'from' statement")
+                self.logger.debug(f"Attempting to locate file {module}")
+                path = Path(module).absolute()
+                self.consume(lexer.TokenKind.Import, "Expected 'import' after 'from' statement")
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Fn:
+                    func = True
+                elif self.current_token is not None and self.current_token.kind == lexer.TokenKind.Var:
+                    func = False
+                else:
+                    raise SyntaxError(f"Unexpected token {self.current_token} after 'from' statement")
+                self.advance()
+                names = []
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        names.append(self.parse_expression().name)
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                        else:
+                            break
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after from statement")
+                else:
+                    names.append(self.parse_atom().name)
+                with open(path, "r") as f:
+                    code = f.read()
+                tokens = lexer.Lexer(code, filename=f"<{module}>", logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file).tokenize()
+                program = Parser(tokens, logger=self.logger, logging_level=self.logger.getEffectiveLevel(), log_file=self.log_file).parse()
+                if func:
+                    out = nodes.FromImportFn(name, module, program, names)
+                else:
+                    out = nodes.FromImportVar(name, module, program, names)
+                return out
             # case lexer.TokenKind.Print:
             #     self.logger.debug("Parsing print statement")
             #     self.advance()
@@ -227,6 +271,27 @@ class Parser:
                 out = WhileStatement(condition, body)
                 self.logger.debug(f"Returning {out}")
                 return out
+            case lexer.TokenKind.For:
+                self.logger.debug("Parsing for statement")
+                self.advance()
+                names = []
+                if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
+                    self.advance()
+                    while self.current_token is not None and self.current_token.kind != lexer.TokenKind.RightParen:
+                        names.append(self.parse_expression())
+                        if self.current_token is not None and self.current_token.kind == lexer.TokenKind.Comma:
+                            self.advance()
+                        else:
+                            break
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after for statement")
+                else:
+                    names.append(self.parse_atom())
+                self.consume(lexer.TokenKind.In, "Expected 'in' after for statement")
+                iterable = self.parse_expression()
+                self.consume(lexer.TokenKind.LeftBrace, "Expected '{' after for statement")
+                body = nodes.StatementBlock(self.parse_block().statements)
+                self.consume(lexer.TokenKind.RightBrace, "Expected '}' after for statement")
+                return ForStatement(names, iterable, body)
         return self.parse_assignment()
 
     def parse_assignment(self) -> Node:
@@ -405,6 +470,18 @@ class Parser:
             case lexer.TokenKind.Identifier:
                 name = self.current_token.value
                 self.advance()
+                if name == "help":
+                    self.consume(lexer.TokenKind.LeftParen, "Expected '(' after 'help'")
+                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.RightParen:
+                        func = None
+                    else:
+                        try:
+                            func = self.consume(lexer.TokenKind.Identifier, "Expected function name as argument to 'help'").value
+                        except SyntaxError as er:
+                            raise SyntaxError("Expected function name as argument to 'help'") from er
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after function name")
+                    out = nodes.Help(func)
+                    return out
                 if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
                     self.advance()
                     args = []
@@ -437,7 +514,7 @@ class Parser:
                             self.advance()
                         else:
                             break
-                    out = TupleLiteral(elements)
+                    out = TupleLiteral(tuple(elements))
                 self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression/tuple")
                 self.logger.debug(f"Returning {out}")
                 return out

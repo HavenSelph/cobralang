@@ -1,3 +1,0 @@
-fn choice(list) {
-    return list[random(0, len(list)-1)]
-}

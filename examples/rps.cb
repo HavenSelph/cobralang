@@ -1,0 +1,18 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+print("Welcome to Rock, Paper, Scissors!")
+print("Type 'rock', 'paper', or 'scissors' to play.")
+print("Type 'quit' to quit.")
+let choices = ("rock", "paper", "scissors")
+let results = ("You lose!", "You win!", "It's a tie!")
+
+while True {
+    print("What is your choice?")
+    let choice = input(">> ")
+    if choice == "quit" {
+        break
+    } elif choice in choices {
+        print(choice(results))
+    } else {
+        print("That is not a valid choice.")
+    }
+}
