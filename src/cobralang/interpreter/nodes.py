@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from __future__ import annotations
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException

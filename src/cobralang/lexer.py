@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 import logging
 from dataclasses import dataclass
 from enum import Enum, auto

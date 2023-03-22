@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from .interpreter import Context, Node
 from .exceptions import ReturnException
 from .nodes import Block, StatementBlock, VariableDeclaration

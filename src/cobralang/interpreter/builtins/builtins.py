@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from ..nodes import Function, StatementBlock
 from typing import Callable
 from ..datatypes import *

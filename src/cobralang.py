@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from cobralang.interpreter.interpreter import Context
 from cobralang.interpreter.nodes import Null
 from os.path import isfile, isdir, split, join
@@ -7,7 +8,7 @@ import cobralang.lexer as lexer
 import logging
 from argparse import ArgumentParser
 from time import perf_counter
-from __init__ import __version__
+from __init__ import __version__, __license__
 
 
 log_levels = {
@@ -84,7 +85,7 @@ else:
     from time import sleep
     log.info("Entering repl mode...")
     context = Context()
-    print(f"CobraLang (v{__version__}) repl mode. Type 'exit()' to exit, 'clear()' to clear the context.")
+    print(f"CobraLang (v{__version__}) Licensed under {__license__} license, type license() for more info.\nRunning in interactive mode. Type 'exit()' to exit, 'clear()' to clear the context.")
     while True:
         try:
             sleep(0.1)

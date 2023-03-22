@@ -1,3 +1,4 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
 from . import lexer
 from .interpreter.datatypes import *
 from .interpreter.statements import *
