@@ -1,6 +1,7 @@
 # This code is licensed under the MIT License (see LICENSE file for details)
 from cobralang.interpreter.interpreter import Context
 from cobralang.interpreter.nodes import Null
+from cobralang.interpreter.builtins.builtins import info_function
 from os.path import isfile, isdir, split, join
 from pathlib import Path
 import cobralang.parser as parser
@@ -85,7 +86,7 @@ else:
     from time import sleep
     log.info("Entering repl mode...")
     context = Context()
-    print(f"CobraLang (v{__version__}) Licensed under {__license__} license, type license() for more info.\nRunning in interactive mode. Type 'exit()' to exit, 'clear()' to clear the context.")
+    info_function()
     while True:
         try:
             sleep(0.1)
