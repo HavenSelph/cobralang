@@ -57,7 +57,9 @@ class Parser:
 
     def consume(self, kind: lexer.TokenKind, error_message: str="Unexpected token"):
         if self.current_token is not None and self.current_token.kind == kind:
+            out = self.current_token
             self.advance()
+            return out
         else:
             raise SyntaxError(f"{error_message}: {self.current_token} is not {kind}")
 
