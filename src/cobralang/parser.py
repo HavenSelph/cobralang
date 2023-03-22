@@ -511,7 +511,7 @@ class Parser:
                             self.advance()
                         else:
                             break
-                    out = TupleLiteral(elements)
+                    out = TupleLiteral(tuple(elements))
                 self.consume(lexer.TokenKind.RightParen, "Expected ')' after expression/tuple")
                 self.logger.debug(f"Returning {out}")
                 return out
