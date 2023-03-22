@@ -8,7 +8,7 @@ import cobralang.lexer as lexer
 import logging
 from argparse import ArgumentParser
 from time import perf_counter
-from __init__ import __version__, __license__
+from src import __version__, __license__, __author__, __repo__
 
 
 log_levels = {
