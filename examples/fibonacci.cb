@@ -1,0 +1,7 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+# We will print the nth term of the fibonacci series.
+fn fibonacci(n: int) -> int:
+    "Return the nth term of the fibonacci series."
+    if n <= 1:
+        return n
+    return fibonacci(n-1) + fibonacci(n-2)

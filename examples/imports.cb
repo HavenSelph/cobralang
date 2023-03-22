@@ -1,0 +1,45 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+# There are a number of built-in cobra files that are available for import, the majority however
+# are just to prove you can write things in this language.
+# I will use functions to show these just to keep the global namespace clean, however it is worth noting
+# that you can always use clear() to clear the global namespace, and then import the file you want to use.
+# Just make sure to run clear() from the global namespace, not from a function.
+
+# The first file we will import is the "math" file, which contains a number of mathematical functions.
+fn sqrt(a=10) {
+    import math
+    "*
+    This function will return the square root of the number you pass in.
+    *"
+    return sqrt(a)
+}
+
+# Now we will show how to import a file that is not in the built-in cobra files.
+# We will import the "fibonacci" file, which contains a function that will return the nth number in the fibonacci sequence.
+fn fib(n=10) {
+    import fibonacci
+    "*
+    This function will return the nth number in the fibonacci sequence.
+    *"
+    return fibonacci(n)
+}
+
+# Now we will show how to import variables/functions from a file without importing the entire file.
+# We will import the "pi" variable from the "math" file.
+fn pi() {
+    from math import var pi
+    "*
+    This function will return the value of pi.
+    *"
+    return pi
+}
+
+# Now we will import the "add" function from the "math" file. Note that I've been using functions to keep the global namespace clean.
+# But you can also use the global namespace if you want to.
+from math import fn add
+add(1, 2)
+
+# Now we will see how to import multiple variables/functions from a file.
+from math import var (pi, e)
+from math import fn (sqrt, add)
+print(pi, e, sqrt(10), add(1, 2))

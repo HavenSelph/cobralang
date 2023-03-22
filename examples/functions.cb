@@ -1,0 +1,30 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+fn add(a, b) {
+    "*
+    This is a docstring similar to Python's docstrings.
+
+    It can be used to document functions.
+    To view this at runtime, use the `help` function.
+    *"
+    return a + b # explicit return
+}
+
+print(add(1,2))
+
+fn add(a, b=1) {
+    # this will not be seen as a docstring, so make sure to use string literals
+    "Because comments are ignored, this will be seen as this functions docstring"
+    a + b  # implicit return
+}
+
+print(add(1))  # since b is not provided, it will be set to 1
+print(add(1, b=5))  # you must specify the name of the argument if you want to use a keyword argument
+
+fn add(a, b=1) {
+    "This is a docstring"
+    a + b
+    "the top thing will no longer return, I will!"
+}
+
+print(add(1, b=2))  # this will print "the top thing will no longer return, I will!"
+# This is because the last expression in a function is always returned, unless a return statement is used prior

@@ -1,0 +1,22 @@
+# This code is licensed under the MIT License (see LICENSE file for details)
+# Cobra has if statements as one would expect. They are very similar to Python's if statements, just add braces. The syntax is as follows:
+"*
+if (condition) {
+    # do something
+} elif (condition) {
+    # do something else
+} else {
+    # do something else
+}
+*"
+
+let x = 5
+if (x == 5) {
+    print("x is 5")
+} elif (x == 6) {
+    print("x is 6")
+} else {
+    print("x is not 5")
+}
+
+# Output: x is 5
