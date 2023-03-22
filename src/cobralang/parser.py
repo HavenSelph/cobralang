@@ -468,6 +468,15 @@ class Parser:
             case lexer.TokenKind.Identifier:
                 name = self.current_token.value
                 self.advance()
+                if name == "help":
+                    self.consume(lexer.TokenKind.LeftParen, "Expected '(' after 'help'")
+                    if self.current_token is not None and self.current_token.kind == lexer.TokenKind.RightParen:
+                        func = None
+                    else:
+                        func = self.consume(lexer.TokenKind.Identifier, "Expected function name as argument to 'help'").value
+                    self.consume(lexer.TokenKind.RightParen, "Expected ')' after function name")
+                    out = nodes.Help(func)
+                    return out
                 if self.current_token is not None and self.current_token.kind == lexer.TokenKind.LeftParen:
                     self.advance()
                     args = []

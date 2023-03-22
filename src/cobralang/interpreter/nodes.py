@@ -2,7 +2,7 @@
 from __future__ import annotations
 from .interpreter import Node, Context
 from .exceptions import ReturnException, StopException
-from .datatypes import Value, Null, Dict, Tuple
+from .datatypes import Value, Null, Dict, Tuple, String, StringLiteral
 
 
 class VariableReference(Node):
@@ -253,3 +253,26 @@ class FromImportVar(Node):
             raise Exception(f"Variable(s) not found in module {self.name} - {self.filename}")
         finally:
             ctx.pop_scope()
+
+
+class Help(Node):
+    def __init__(self, name: str):
+        self.name = name
+
+    def __repr__(self):
+        return f"Help({self.name})"
+
+    def run(self, ctx: Context):
+        try:
+            if self.name is None:
+                return String("Call help with a function name to get documentation on that function.")
+            if self.name == "help":
+                return String("maximum recursion depth exceeded :)")
+            func = ctx.get_function(self.name)
+            if len(func.body.statements) < 1:
+                return String(f"Function {self.name} has no documentation.")
+            if not isinstance(func.body.statements[0], StringLiteral):
+                return String(f"Function {self.name} has no documentation.")
+            return func.body.statements[0].run(ctx)
+        except KeyError:
+            raise Exception(f"Function {self.name} not found")
