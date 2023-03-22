@@ -475,7 +475,10 @@ class Parser:
                     if self.current_token is not None and self.current_token.kind == lexer.TokenKind.RightParen:
                         func = None
                     else:
-                        func = self.consume(lexer.TokenKind.Identifier, "Expected function name as argument to 'help'").value
+                        try:
+                            func = self.consume(lexer.TokenKind.Identifier, "Expected function name as argument to 'help'").value
+                        except SyntaxError as er:
+                            raise SyntaxError("Expected function name as argument to 'help'") from er
                     self.consume(lexer.TokenKind.RightParen, "Expected ')' after function name")
                     out = nodes.Help(func)
                     return out
