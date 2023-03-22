@@ -429,6 +429,8 @@ class Lexer:
                         self.logger.error(f"Unterminated string literal at {start}")
                         raise InvalidStringError(f"Unterminated string literal at {start}", start, self.position)
                     self.advance()
+                    if multi_line:
+                        value = "\n".join([ln.strip() for ln in value.splitlines()])
                     push_token(TokenKind.StringLiteral, value, start)
                 case char:
                     self.logger.error(f"Illegal character '{char}' at {self.position}")
