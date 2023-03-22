@@ -408,6 +408,8 @@ class Lexer:
                                 value += "\n"
                             elif self.current_char == "t":
                                 value += "\t"
+                            elif self.current_char == "\\":
+                                value += "\\"
                             elif self.current_char == char:
                                 value += char
                             else:
