@@ -200,10 +200,13 @@ class Dict(Value):
         return len(self.value) != 0
 
     def __getitem__(self, item: Value):
-        return self.value[item.value]
+        try:
+            return self.value[item]
+        except KeyError as e:
+            raise KeyError(f'Key {item} not found in dictionary') from e
 
     def __setitem__(self, key: Value, value: Value):
-        self.value[key.value] = value
+        self.value[key] = value
 
     def __len__(self):
         return len(self.value)
