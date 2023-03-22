@@ -366,13 +366,13 @@ class String(Value):
         return self.value.__repr__()
 
     def __str__(self):
-        return self.value
+        return String(self.value)
 
     def __bool__(self):
-        return self.value!=""
+        return Boolean(self.value!="")
 
     def __len__(self):
-        return len(self.value)
+        return Integer(len(self.value))
 
     def __getitem__(self, item: Value):
         return String(self.value[item.value])
