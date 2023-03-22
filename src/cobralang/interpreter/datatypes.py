@@ -69,7 +69,7 @@ class ListLiteral(Node):
 
 
 class TupleLiteral(Node):
-    def __init__(self, elements: list):
+    def __init__(self, elements: tuple):
         self.elements = elements
 
     def __repr__(self):
