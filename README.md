@@ -157,14 +157,11 @@ There's a lot I learned while doing this, and I'm sure there's a lot I could hav
 When starting this project, I really blurred the line between these two, and it made it extremely difficult down the road to fix bugs. For instance, there is a sneaky bug I found just while writing this readme that makes it impossible to find out why lists end up with Python datatypes in them. I really cannot find the cause of this bug, but I know that if I had done the steps properly, this would probably be trivial! Back to the point, let me explain **MY** understanding of this relationship:
 > A parser is a program that takes a stream of tokens produced by a "lexer" or "tokenizer" and produces what's called an Abstract Syntax Tree (AST) This AST is what an interpreter is supposed to parse into a runnable program.
 
-> (Lexer->(stream of tokens)->Parser->(AST)->Interpreter->(Program))
+> (Lexer->(stream of tokens)->Parser->(AST)->Interpreter
 
 I want to make it clear again, that this is my personal understanding of it. My understanding might not exactly cut it for some people, so here's a link to a [Wiki Article](https://en.wikipedia.org/wiki/Lexical_analysis) that explains it a little better.
 
-The issue with the way I went around this is that I went direct from parser to program. While this probably has benefits in some cases, it is definitely not the way a learner should go. I would recommend that if attempting to write your first language, you keep to this method of doing things. It will make your life a lot easier. 
-
-### Logs are your friend.
-I cannot stress this enough, make sure you implement logs into your program. It will save you so much time. One of the biggest problems I ran into was trying to understand how my program behaved while it was running, with the lexer/parser this was trivial as I had logs. However, I never implemented logs for my interpreter, and it made it extremely difficult to debug. Learn from my mistake and **implement logs**.
+The issue with the way I went around this is that I went direct from parser to program. While this MAY? have benefits in some cases, it is definitely not the way a learner should go. I would recommend that if attempting to write your first language, you keep to this method of doing things. It will make your life a lot easier. 
 
 ### Don't let your chosen host language handle anything.
 When starting off, I allowed Python to handle a LOT. This was the wrong option, as I became dependent on a bunch of Python features I should have implemented myself. This is something I'm sure is obvious to most people, but I thought I'd mention it anyway, as it might save you a headache down the road.
